@@ -1,0 +1,111 @@
+# ============================
+# Python
+# ============================
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+*.egg
+*.egg-info/
+dist/
+build/
+eggs/
+parts/
+var/
+sdist/
+develop-eggs/
+.installed.cfg
+lib/
+lib64/
+MANIFEST
+
+# 虚拟环境
+.venv/
+venv/
+env/
+ENV/
+env.bak/
+venv.bak/
+
+# ============================
+# IDE / 编辑器
+# ============================
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+
+# ============================
+# 日志与运行时文件
+# ============================
+*.log
+logs/
+!logs/.gitkeep
+backend/data/logs/*.log
+
+# ============================
+# 环境变量与密钥
+# ============================
+.env
+.env.*
+!.env.example
+*.key
+*.pem
+
+# ============================
+# 模型文件（体积过大，请勿提交到仓库）
+# ============================
+backend/data/models/
+*.gguf
+*.safetensors
+*.pth
+*.pt
+*.onnx
+*.bin
+*.h5
+*.msgpack
+*.ot
+
+# ============================
+# 数据集与压缩包
+# ============================
+backend/data/大连存储哥提供的数据集/
+*.rar
+*.zip
+*.7z
+*.tar
+*.gz
+backend/app.zip
+
+# ============================
+# 测试与覆盖率
+# ============================
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+.nox/
+.cache
+nosetests.xml
+coverage.xml
+
+# ============================
+# Jupyter
+# ============================
+.ipynb_checkpoints/
+*.ipynb
+
+# ============================
+# 其他
+# ============================
+*.bak
+*.tmp
+*.swp
+
+# ============================
+# 开发文档
+# ============================
+doc/
