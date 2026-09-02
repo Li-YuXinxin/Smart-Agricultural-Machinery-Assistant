@@ -29,7 +29,7 @@ class Settings(BaseSettings):
     # 显存检测
     DEVICE: str = "cpu"
     LLM_GPU_LAYERS: int = 0 # 模型层数，默认0层，不使用GPU加速
-    GPU_MEMORY_THRESHOLD_GB: int = 6    # 显存阈值，默认6GB，超过阈值则使用CPU
+    GPU_MEMORY_THRESHOLD_GB: float = 5.9    # 显存阈值，默认5.9GB，超过阈值则使用CPU
     
     # 微调参数
     BATCH_SIZE: int = 16    # 批次大小，默认16
