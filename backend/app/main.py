@@ -8,6 +8,7 @@ import uvicorn
 from routers import test, test2, test3, test4
 from utils.common_utils import default_logger
 from config.config import settings
+from services.classify_service import load_resnet_50_from_local_safetensors
 
 
 # 创建 FastAPI 应用实例
@@ -30,6 +31,7 @@ app.add_middleware(
 @app.on_event("startup")
 async def startup_event():
     # 启动时的初始化操作
+    load_resnet_50_from_local_safetensors()
     default_logger.info("应用启动完成")
 
 # 生命周期事件——关闭钩子
