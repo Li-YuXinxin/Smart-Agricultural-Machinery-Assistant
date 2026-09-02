@@ -7,6 +7,7 @@ import gc
 import uvicorn
 from routers import test, test2, test3, test4
 from utils.common_utils import default_logger
+from config.config import settings
 
 
 # 创建 FastAPI 应用实例
