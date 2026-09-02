@@ -91,3 +91,4 @@ def adapt_timm_resnet_state_dict(state_dict):
             continue
         
         default_logger.info(f"适配后的STATE_DICT的键的数量：{len(new_state_dict)}")
+        return new_state_dict
