@@ -12,10 +12,11 @@ class Settings(BaseSettings):
 
     MODELS_PTH_DIR: str = f"{MODELS_DIR}/pth"
     MODELS_GGUF_DIR: str = f"{MODELS_DIR}/gguf"
+    MODELS_SAFETENSORS_DIR: str = f"{MODELS_DIR}/safetensors"
 
-    # 微调后的图像识别模型目录
+    # 图像识别目录
     RESNET50_MODEL_ID: str = "microsoft/resnet-50"
-    RESNET50_MODEL_PATH: str = f"{MODELS_PTH_DIR}/{RESNET50_MODEL_ID}"
+    RESNET50_MODEL_PATH: str = f"{MODELS_SAFETENSORS_DIR}/{RESNET50_MODEL_ID}"
     
     # 微调后的图像识别模型目录
     RESNET50_FINETUNED_PTH_DIR: str = f"{MODELS_PTH_DIR}/resnet_50_finetuned"
@@ -60,9 +61,9 @@ class Settings(BaseSettings):
         torch.set_default_device(self.DEVICE)
         default_logger.info(f"默认设备: {self.DEVICE}")
         
-        def __init__(self, **kwargs):
-            super().__init__(**kwargs)
-            self._detect_and_configure_device()
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self._detect_and_configure_device()
 
 settings = Settings()
 
