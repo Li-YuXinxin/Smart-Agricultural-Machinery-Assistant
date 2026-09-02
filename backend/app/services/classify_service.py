@@ -7,6 +7,7 @@ from utils.common_utils import default_logger
 from pathlib import Path
 from config.config import settings
 from safetensors.torch import load_file
+import torchvision.models as models
 
 class ConsineClassifier:
 
@@ -46,6 +47,7 @@ def adapt_timm_resnet_state_dict(state_dict):
             new_state_dict[f"bn1.{suffix}"] = v
             continue
         elif k.startswith("classifier."):
+            # 全连接层
             parts = k.split(".")
             if len(parts) >= 3 and parts[1] == '1':
                 new_state_dict[f"fc.{parts[-1]}"] = v
@@ -106,7 +108,45 @@ def load_resnet_50_from_local_safetensors():
         raise RuntimeError(f"加载原始ResNet-50模型失败：{e}")
     
     sample_keys = list(raw_state_dict.keys())  # 获取所有键名
-    if any(k.startswith("resnet.encoder.stages") for k in sample_keys):
-        default_logger.info(f"非标准key")
+    # if any(k.startswith("resnet.encoder.stages") for k in sample_keys):
+    #     default_logger.info(f"非标准key")
+    # else:
+    #     default_logger.info(f"标准key")
+        
+    # 转换为标准key
+    adapted_state_dict = adapt_timm_resnet_state_dict(raw_state_dict)
+
+    # 构建标准模型
+    model = models.resnet50(weight=None)
+
+    # 处理旧的fc权重和偏置项
+    old_fc_weight = None
+    if 'fc.weight' in adapted_state_dict:
+        old_fc_weight = adapted_state_dict['fc.weight']
+        del adapted_state_dict['fc.weight']
+    if 'fc.bias' in adapted_state_dict:
+        del adapted_state_dict['fc.bias']    
+        
+    # 处理骨架权重
+    missing_keys, unexpected_keys = model.load_state_dict(adapted_state_dict, strict=False)
+
+    # 标准模型必有的key
+    essential_keys = ['conv1.weight', 'bn1.weight', 'layer1.0.conv1.weight']
+
+    # 查找必备但却丢失的key
+    missing_essential = [k for k in essential_keys if k in missing_keys]
+
+    if missing_essential:
+        default_logger.error(f"缺失的必备key: {missing_essential}")
+        raise RuntimeError(f"缺失的必备key: {missing_essential}")
+    
+    # 替换fc层
+    in_features = model.fc.in_features
+    num_classes = 1000
+    model.fc = ConsineClassifier(in_features, num_classes)
+    if old_fc_weight is not None:
+        model.fc.weight = old_fc_weight
+        default_logger.info(f"旧的fc层权重已替换为新的权重")
     else:
-        default_logger.info(f"标准key")
+        default_logger.info(f"没有旧的fc层权重")
+    return model
