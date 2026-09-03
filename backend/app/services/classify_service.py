@@ -1,6 +1,7 @@
 import json
 import math
 import re
+import numpy as np
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -13,6 +14,9 @@ import torchvision.transforms as transforms
 import threading
 import gc
 from torchvision.models import ResNet50_Weights
+import transformers
+from torchvision import datasets
+from torch.utils.data import WeightedRandomSampler
 
 class ConsineClassifier:
 
@@ -287,3 +291,110 @@ class ClassifyService:
             model.fc = new_fc
             default_logger.info(f"fc层已扩展为{new_num_classes}个分类")
             return model
+        
+        # 继续微调
+        # 保存旧权重
+        old_weight = fc.weight.data
+        new_fc = ConsineClassifier(in_features, new_num_classes, scale=new_scale)
+
+        if new_num_classes > old_num_classes:
+            # 如果新分类数大于旧分类数，则只复制旧分类数的权重
+            new_fc.weight.data[:old_num_classes] = old_weight[:old_num_classes]
+            # 填充新分类的权重
+            nn.init.kaiming_uniform_(new_fc.weight.data[old_num_classes:,:], a=math.sqrt(5))
+            default_logger.info(f"fc层已扩展为{new_num_classes}个分类")
+        else:
+            # 截断
+            new_fc.weight.data[:,:] = old_weight[:new_num_classes, :]
+            default_logger.info(f"fc层已截断为{new_num_classes}个分类")
+            
+        model.fc = new_fc
+        return model
+    
+    def fintune(self, data_dir: Path, epoch = 10,
+        stop_check=None, reset_model=False):
+        # 微调模型
+        default_logger.info(f"开始微调模型,支持{epoch}个epoch")
+        try:
+            # 定义微调参数
+            # 对应的训练集
+            train_transform = transformers.Compose([
+                transformers.RandomResizedCrop(224, scale=(0.7, 1.0)),
+                transformers.RandomHorizontalFlip(p=0.5),
+                transformers.ColorJitter(brightness=0.3, contrast=0.3, saturation=0.3, hue=0.1),
+                transformers.RandomRotation(20),
+                transformers.ToTensor(),
+                transformers.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
+            ])
+            # 对应的验证集
+            val_transform = transformers.Compose([
+                transformers.Resize(224, 224),
+                transformers.ToTensor(),
+                transformers.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
+            ])
+            full_dataset = datasets.ImageFolder(root=str(data_dir), transform=train_transform)
+            
+            # 从数据集中提取分类
+            class_names = full_dataset.classes
+
+            # 分类的个数
+            num_class = len(class_names)
+            if num_class == 0:
+                default_logger.error(f"数据集{data_dir}中没有分类")
+                return False
+
+            # 以2:8的比例划分验证集和训练集
+            total_len = len(full_dataset)
+            indices = list(range(total_len))
+            # 固定随机种子，防止不同计算框架的随机性不一致
+            nn.random.seed(42)
+            # 打乱列表中元素次序
+            nn.random.shuffle(indices)
+            # 验证集的长度
+            val_len = int(0.2 * total_len)
+            # 固定训练集(后百分之八十)
+            train_indices = indices[val_len:]
+            # 固定验证集(前百分之二十)
+            val_indices = indices[:val_len]
+            # 从数据集中抽取验证集
+            val_dataset = torch.utils.data.Subset(full_dataset, val_indices)
+            # 设置验证集的变换参数
+            val_dataset.dataset.transform = val_transform
+
+            # 从数据集中抽取训练集
+            train_dataset = torch.utils.data.Subset(full_dataset, train_indices)
+
+            # 类别均衡采样
+            train_labels = [full_dataset.targets[i] for i in train_indices]
+            class_counts = np.bincount(train_labels, minlength=num_class)
+            class_counts = np.maximum(class_counts, 1)
+            
+            # 检查个数为0个样本,将其改为1
+            class_counts = np.maximum(class_counts, 1)
+
+            # 类型权重
+            class_weights = 1.0 / torch.tensor(class_counts, dtype=torch.float)
+            sample_weights = class_weights[train_labels]
+
+            # 随机样本
+            sampler = WeightedRandomSampler(sample_weights, len(sample_weights), replacement=True)
+
+            batch_size = settings.BATCH_SIZE
+            # Windows下num_workers参数需要设置为0,否则容易引起错误导致失败
+            # 即使使用了WeightedRandomSampler也只能提高低数量样本的抽出概率           
+            train_loader = torch.utils.data.DataLoader(
+                train_dataset, batch_size=batch_size,
+                sampler=sampler, shuffle=True)
+
+            val_loader = torch.utils.data.DataLoader(
+                val_dataset, batch_size=batch_size,
+                shuffle=False, num_workers=0)
+
+        except Exception as e:
+            default_logger.error(f"数据集加载出错: {e}")
+            return False
+        
+        pth_path = Path(settings.RESNET50_FINETUNED_PTH_PATH)
+        class_path = Path(settings.RESNET50_FINETUNED_CLASSNAMES_PATH)
+        old_num_class = 0
+        model = None

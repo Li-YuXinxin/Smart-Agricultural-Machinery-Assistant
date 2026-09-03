@@ -25,7 +25,7 @@ class Settings(BaseSettings):
     # 微调后的模型所能够识别的类型列表
     JSON_DIR: str = f"{DATA_DIR}/json"
     RESNET50_FINETUNED_JSON_DIR: str = f"{JSON_DIR}/resnet_50_finetuned"
-    RESNET50_FINETUNED_CLASSESNAMES: str = f"{JSON_DIR}/resnet_50_finetuned/class_name.json"
+    RESNET50_FINETUNED_CLASSNAMES_PATH: str = f"{JSON_DIR}/resnet_50_finetuned/class_name.json"
     
     # 显存检测
     DEVICE: str = "cpu"
