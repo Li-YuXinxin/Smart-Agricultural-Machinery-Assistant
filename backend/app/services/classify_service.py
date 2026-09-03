@@ -1,3 +1,4 @@
+import json
 import math
 import re
 import torch
@@ -8,6 +9,10 @@ from pathlib import Path
 from config.config import settings
 from safetensors.torch import load_file
 import torchvision.models as models
+import torchvision.transforms as transforms
+import threading
+import gc
+from torchvision.models import ResNet50_Weights
 
 class ConsineClassifier:
 
@@ -150,3 +155,135 @@ def load_resnet_50_from_local_safetensors():
     else:
         default_logger.info(f"没有旧的fc层权重")
     return model
+
+class ClassifyService:
+    _instance = None
+    _lock = threading.Lock()
+
+    def __new__(cls):
+        if cls._instance is None:
+            with cls._lock:
+                if cls._instance is None:
+                    cls._instance = super().__new__(cls)
+        return cls._instance
+    
+    def __init__(self):
+        if hasattr(self, '_initialized'):
+            # 如果已经初始化，则直接返回
+            return
+        # 如果没有初始化，做初始化标记
+        self._initialized = True
+        self.device = torch.device(settings.DEVICE)
+        self.model = None
+        # 当前模型支持的识别列表
+        self.class_names = []
+        # 标识模型是否载入成功
+        self.model_ready = False
+        # 图像归一化处理
+        self.transform = transforms.Compose([
+            transforms.Resize((224, 224)),
+            # 归一化：0-1
+            transforms.ToTensor(),
+            # 归一化参数平均差/标准差
+            transforms.Normalize(mean=[0.485, 0.456, 0.406],
+                                std=[0.229, 0.224, 0.225]),
+        ])
+        self._load_model()
+        
+    def unload_model(self):
+        # 卸载模型
+        if self.model is not None:
+            # 清空内存
+            del self.model
+            self.model = None
+            gc.collect()
+            if torch.cuda.is_available():
+                # 清空显存
+                torch.cuda.empty_cache()
+            default_logger.info(f"模型已卸载")
+        else:
+            default_logger.info(f"模型未加载")
+
+    def _load_model(self):
+        #加载模型
+        self.unload_model()
+        pth_path = Path(settings.RESNET50_FINETUNED_PTH_PATH)
+        class_path = Path(settings.RESNET50_FINETUNED_CLASSNAMES_PATH)
+        
+        #尝试加载微调模型
+        if pth_path.exists() and class_path.exists():
+            try:
+                with open(class_path, 'r',encoding='utf-8') as f:
+                    class_names = json.load(f)
+                num_classes = len(class_names)
+                model = models.resnet50(weights=None)
+                
+                #提取分类的特征
+                in_features = model.fc.in_features
+                #替换分类器
+                model.fc = ConsineClassifier(in_features, num_classes)
+                #提取字典
+                state_dict = torch.load(pth_path,map_location=self.device)
+                #保存字典到标准模型
+                model.load_state_dict(state_dict)
+                #设置模型放入的位置
+                model.to(self.device)
+                #执行以上配置
+                model.eval()
+                
+                self.model = model
+                self.class_names = class_names
+                #加载完毕
+                self.model_ready = True
+                default_logger.info(f"模型已加载,支持{num_classes}")
+                return
+                
+            except Exception as e:
+                default_logger.error(f"模型加载失败:{e}")
+                
+        default_logger.error(f"缺失微调模型,开始预训练模型")
+        try:
+            model = load_resnet_50_from_local_safetensors()
+            self.model = model
+            self.class_names = self._get_imagenet_classes()
+            # 加载完毕
+            self.model_ready = True
+            default_logger.info(f"预训练模型已加载,支持{len(self.class_names)}个分类")
+        except Exception as e:
+            default_logger.error(f"加载预训练模型失败: {e}")
+            raise RuntimeError(f"无法加载模型: {e}")
+        
+    def _get_imagenet_classes(self):
+        # 获取ImageNet分类列表
+        try:
+            weights = ResNet50_Weights.IMAGENET1K_V1()
+            return weights.meta['categories']
+        except Exception as e:
+            default_logger.warning(f"获取ImageNet分类列表失败：{e}")
+            return [f"class_{i}" for i in range(1000)]
+        
+    # def _load_class_names_from_data(self):
+    # 从数据加载分类列表
+    
+    def _expand_fc_layer(self, model, old_num_classes, new_num_classes):
+        # 扩展fc层
+        fc = model.fc
+        if not isinstance(fc, ConsineClassifier):
+            raise TypeError("模型fc层必须是ConsineClassifier类型")
+        in_features = fc.in_features
+        old_scale = fc.scale.data.item()
+        new_scale = math.sqrt(new_num_classes)
+
+        if old_num_classes == 0:
+            # 如果旧分类数为0，则直接创建新分类器
+            new_fc = ConsineClassifier(in_features,
+            new_num_classes, scale=new_scale)
+            # 调整新分类的参数
+            # 调整新分类的参数
+            nn.init.kaiming_uniform_(new_fc.weight,
+                a=math.sqrt(5))
+
+            # 保存新分类器到标准模型
+            model.fc = new_fc
+            default_logger.info(f"fc层已扩展为{new_num_classes}个分类")
+            return model
