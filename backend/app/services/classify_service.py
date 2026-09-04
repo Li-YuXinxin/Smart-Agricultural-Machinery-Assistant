@@ -380,21 +380,173 @@ class ClassifyService:
             sampler = WeightedRandomSampler(sample_weights, len(sample_weights), replacement=True)
 
             batch_size = settings.BATCH_SIZE
-            # Windows下num_workers参数需要设置为0,否则容易引起错误导致失败
-            # 即使使用了WeightedRandomSampler也只能提高低数量样本的抽出概率           
+            
+            '''创建 DataLoader
+            Windows下num_workers参数需要设置为0(避免多进程错误), 否则容易引起错误导致失败
+            即使使用了WeightedRandomSampler也只能提高低数量样本的抽出概率          
+            并不能完全解决某样本0抽出的问题''' 
             train_loader = torch.utils.data.DataLoader(
                 train_dataset, batch_size=batch_size,
                 sampler=sampler, shuffle=True)
 
             val_loader = torch.utils.data.DataLoader(
-                val_dataset, batch_size=batch_size,
-                shuffle=False, num_workers=0)
+                val_dataset, batch_size=batch_size, 
+                shuffle=False, num_workers=0)       # 验证集不需要打乱（shuffle=False）
+            # TODO-END: 后期可用 sklearn 的方式替换
 
         except Exception as e:
             default_logger.error(f"数据集加载出错: {e}")
             return False
-        
+
+        '''加载模型'''        
         pth_path = Path(settings.RESNET50_FINETUNED_PTH_PATH)
         class_path = Path(settings.RESNET50_FINETUNED_CLASSNAMES_PATH)
         old_num_class = 0
         model = None
+        
+        '''初始化模型'''
+        # 读取上次微调后的模型，会引发灾难遗忘，可以省略
+        # if not reset_model and pth_path.exists() and class_path.exists():
+        #     # 继续微调
+        #     with open(class_path, 'r', encoding='utf-8') as f:
+        #         old_class_names = json.load(f)
+        #     old_num_class = len(old_class_names)
+
+        # try:
+        #     model = models.resnet50(weight=None)
+        #     in_feature = model.fc.in_features
+        #     model.fc = ConsineClassifier(in_feature, old_num_class)
+        #     state_dict = torch.load(pth_path, map_location=self.device)
+        #     model.load_state_dict(state_dict)
+        #     default_logger.info(f"模型加载成功，分类数为{old_num_class}")
+        # except Exception as e:
+        #     default_logger.error(f"模型加载出错：{e}")
+        #     model = None
+
+        # 从本地加载预训练模型
+        if model is None:
+            try:
+                # 如果获取微调模型失败，则从本地加载模型
+                model = load_resnet_50_from_local_safetensors()
+                old_num_class = 0
+                default_logger.info(f"原始模型加载成功,分类数为{old_num_class}")
+            except Exception as e:
+                default_logger.error(f"原始模型加载出错: {e}")
+                raise RuntimeError(f"原始模型加载出错: {e}")
+
+        # 如果当前数据集的类别数与模型原来的类别数不同, 则调整fc
+        if old_num_class != num_class:
+            # 调整fc层(增加/缩减)
+            model = self._expand_fc_layer(model, old_num_class, num_class)
+            default_logger.info(f"fc层调整成功, 分类数为{num_class}")
+        else:
+            # 调整学习的缩放倍数
+            current_scale = model.fc.scale.data.item()
+            target_scale = math.sqrt(num_class)
+            if abs(current_scale - target_scale) > 1e-3:
+                model.fc.scale.data.fill_(target_scale)
+                default_logger.info(f"fc层缩放倍数调整成功, 分类数为{num_class}")
+            default_logger.info(f"fc层分类不变")
+
+            model = model.to(self.device)
+
+            # 冻结骨干
+            for param in model.parameters():
+                param.requires_grad = False
+
+            # 可改变fc
+            for param in model.fc.parameters():
+                param.requires_grad = True
+
+            # 使用自定义损失函数(标签平滑)
+            criterion = LabelSmoothingCrossEntropy(smoothing=0.1)
+
+            # 优化器
+            lr_fc = 5e-4
+            optimizer = optim.AdamW(model.fc.parameters(),
+                lr=lr_fc, weight_decay=0.01)
+
+            # 调度器
+            scheduler = optim.lr_scheduler.CosineAnnealingLR(optimizer,
+                T_max=epoch, eta_min=1e-6)
+
+            # 跑圈训练
+            best_acc = 0.0
+            best_model_sate = None
+
+            for e in range(1, epoch+1):
+                if stop_check and stop_check(e):
+                    default_logger.info(f"微调训练提前结束,当前epoch为{e}")
+                    return False
+                
+            # 微调
+            model.train()
+            # 调整
+            running_loss, correct, total = 0.0, 0, 
+            
+            ''''''
+            for images, labels in train_loader:
+                images = images.to(self.device)
+                labels = labels.to(self.device)
+                # 优化参数清零
+                optimizer.zero_grad()
+                # 导出结果
+                outputs = model(images)
+                # 计算损失量(向前传播)
+                loss = criterion(outputs, labels)
+                # 向后传播
+                loss.backward()
+                # 调整梯度(确保梯度的合理范围, 不能超过 1.0 )
+                clip_grad_norm_(model.fc.parameters(), 1.0)
+                # 落实更新
+                optimizer.step()
+                running_loss += loss.item() * images.size(0)
+                # 计算准确率，不能超过 1
+                _, pred = torch.max(outputs, 1) # 前一次
+                total += labels.size(0)         # 总体
+                correct += (pred == labels).sum().item()    # 当前
+                
+            train_loss = running_loss / total   # 整体微调的损失
+            train_acc = correct / total         # 整体微调的正确率
+            
+            # 验证
+            model.eval()
+            val_loss, val_correct, val_total = 0.0, 0, 0
+            with torch.no_grad():    # with: 临时解冻
+                for images, labels in val_loader:
+                    images = images.to(self.device)
+                    labels = labels.to(self.device)
+                    # 导出结果
+                    outputs = model(images)
+                    # 计算损失量(向前传播)
+                    loss = criterion(outputs, labels)
+                    val_loss += loss.item() * images.size(0)
+                    # 计算准确率，不能超过 1
+                    _, pred = torch.max(outputs, 1) # 前一次
+                    val_total += labels.size(0)         # 总体
+                    val_correct += (pred == labels).sum().item()    # 当前
+            val_loss /= val_total
+            val_acc = val_correct / val_total
+            
+            # 调整学习率
+            scheduler.step()
+            # 获得当前的学习率
+            current_lr = optimizer.param_groups[0]['lr']
+            
+            if val_acc > best_acc:
+                # 保存模型
+                best_acc = val_acc
+                best_model_sate = copy.deepcopy(model.state_dict())
+                default_logger.info(f" 验证准确率提升, 当前epoch为{e}, 准确率{val_acc}")
+        
+        '''保存模型'''
+        # 微调失败
+        if best_model_sate is None:
+            default_logger.info(f"微调失败")
+            return False
+        
+        try:
+            # 保存微调后的模型权重
+            torch.save(best_model_sate, settings.RESNET50_FINETUNED_PTH_PATH)
+        except Exception as e:
+            default_logger.error(f"保存微调后的模型失败: {e}")
