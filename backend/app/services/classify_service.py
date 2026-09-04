@@ -1,4 +1,5 @@
 import copy
+import random
 import re       # 正则匹配权重键名
 import json     # 读写 JSON 文件（类别名称）
 import math     # 数学计算
@@ -11,7 +12,7 @@ from pathlib import Path    # 路径处理
 torchvision：计算机视觉工具（模型、数据处理、图像变换）'''
 import torch    # PyTorch 深度学习框架
 import torch.nn as nn   # 神经网络模块
-# import torch.nn.functional as F     #函数式接口
+import torch.nn.functional as F     #函数式接口
 import torchvision.models as models     # #ResNet 模型
 import torchvision.transforms as transforms     # 图像预处理
 from safetensors.torch import load_file
@@ -77,7 +78,7 @@ class ConsineClassifier(nn.Module):
         weight_norm = F.normalize(self.weight, dim=1, p=2)
         x_norm = F.normalize(x, dim=1, p=2)
         # 计算余弦相似度
-        cos_sim = F.linear(x_norm, weight_norm)
+        cos_sim = F.linear(x_norm, weight_norm.t())
         return cos_sim * self.scale
 
 '''
@@ -322,7 +323,7 @@ class ClassifyService:
             except Exception as e:
                 default_logger.error(f"模型加载失败:{e}")
                 
-        default_logger.error(f"缺失微调模型,开始预训练模型")
+        default_logger.info(f"缺失微调模型,开始预训练模型")
         try:
             model = load_resnet_50_from_local_safetensors()
             self.model = model
@@ -337,7 +338,7 @@ class ClassifyService:
     '''获取 ImageNet 的 1000 个分类列表，用于预训练模型的输出解释。'''
     def _get_imagenet_classes(self):
         try:
-            weights = ResNet50_Weights.IMAGENET1K_V1()
+            weights = ResNet50_Weights.IMAGENET1K_V1
             return weights.meta['categories']
         except Exception as e:
             default_logger.warning(f"获取ImageNet分类列表失败：{e}")
@@ -398,7 +399,7 @@ class ClassifyService:
         6. 加载模型（微调或预训练）
         7. 调整 fc 层
     '''
-    def finetune(self, data_dir: Path, epoch = 20, stop_check=None, reset_model=False):
+    def finetune(self, data_dir: Path, epoch = 20, stop_check=None):
         default_logger.info(f"开始微调模型,支持{epoch}个epoch")
         try:
             # 定义微调参数
@@ -417,7 +418,7 @@ class ClassifyService:
             ])
             # 对应的验证集
             val_transform = transforms.Compose([
-                transforms.Resize(224, 224),
+                transforms.Resize((224, 224)),
                 transforms.ToTensor(),
                 transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
             ])
@@ -436,9 +437,11 @@ class ClassifyService:
             total_len = len(full_dataset)
             indices = list(range(total_len))
             # 固定随机种子，防止不同计算框架的随机性不一致
-            nn.random.seed(42)
+            # nn.random.seed(42)
+            torch.manual_seed(42)
             # 打乱列表中元素次序
-            nn.random.shuffle(indices)
+            # nn.random.shuffle(indices)
+            random.shuffle(indices) 
             # 验证集的长度
             val_len = int(0.2 * total_len)
             # 固定训练集(后百分之八十)
@@ -475,7 +478,7 @@ class ClassifyService:
             并不能完全解决某样本0抽出的问题''' 
             train_loader = torch.utils.data.DataLoader(
                 train_dataset, batch_size=batch_size,
-                sampler=sampler, shuffle=True)
+                sampler=sampler, shuffle=False)
 
             val_loader = torch.utils.data.DataLoader(
                 val_dataset, batch_size=batch_size, 
@@ -484,6 +487,8 @@ class ClassifyService:
 
         except Exception as e:
             default_logger.error(f"数据集加载出错: {e}")
+            import traceback
+            traceback.print_exc()
             return False
 
         '''加载模型'''        
@@ -538,44 +543,48 @@ class ClassifyService:
 
             model = model.to(self.device)
 
-            # 冻结骨干
-            for param in model.parameters():
-                param.requires_grad = False
+        # 冻结骨干
+        for param in model.parameters():
+            param.requires_grad = False
 
-            # 可改变fc
-            for param in model.fc.parameters():
-                param.requires_grad = True
+        # 可改变fc
+        for param in model.fc.parameters():
+            param.requires_grad = True
 
-            # 使用自定义损失函数(标签平滑)
-            criterion = LabelSmoothingCrossEntropy(smoothing=0.1)
+        # 使用自定义损失函数(标签平滑)
+        criterion = LabelSmoothingCrossEntropy(smoothing=0.1)
 
-            # 优化器
-            lr_fc = 5e-4
-            optimizer = optim.AdamW(model.fc.parameters(),
-                lr=lr_fc, weight_decay=0.01)
+        # 优化器
+        lr_fc = 5e-4
+        optimizer = optim.AdamW(model.fc.parameters(),
+            lr=lr_fc, weight_decay=0.01)
 
-            # 调度器
-            scheduler = optim.lr_scheduler.CosineAnnealingLR(optimizer,
-                T_max=epoch, eta_min=1e-6)
+        # 调度器
+        scheduler = optim.lr_scheduler.CosineAnnealingLR(optimizer,
+            T_max=epoch, eta_min=1e-6)
 
-            # 跑圈训练
-            best_acc = 0.0
-            best_model_sate = None
+        # 跑圈训练
+        best_acc = 0.0
+        best_model_sate = None
 
-            for e in range(1, epoch+1):
-                if stop_check and stop_check(e):
-                    default_logger.info(f"微调训练提前结束,当前epoch为{e}")
-                    return False
-                
+        for e in range(1, epoch+1):
+            if stop_check and stop_check(e):
+                default_logger.info(f"微调训练提前结束,当前epoch为{e}")
+                return False
+            
             # 微调
             model.train()
             # 调整
-            running_loss, correct, total = 0.0, 0, 
+            running_loss, correct, total = 0.0, 0, 0
             
             ''''''
             for images, labels in train_loader:
-                images = images.to(self.device)
-                labels = labels.to(self.device)
+                try:
+                    images = images.to(self.device)
+                    labels = labels.to(self.device)
+                except Exception as img_err:
+                    default_logger.warning(f"跳过无法加载的图片批次: {img_err}")
+                    continue
                 # 优化参数清零
                 optimizer.zero_grad()
                 # 导出结果
@@ -602,8 +611,12 @@ class ClassifyService:
             val_loss, val_correct, val_total = 0.0, 0, 0
             with torch.no_grad():    # with: 临时解冻
                 for images, labels in val_loader:
-                    images = images.to(self.device)
-                    labels = labels.to(self.device)
+                    try:
+                        images = images.to(self.device)
+                        labels = labels.to(self.device)
+                    except Exception as img_err:
+                        default_logger.warning(f"跳过无法加载的验证图片批次: {img_err}")
+                        continue
                     # 导出结果
                     outputs = model(images)
                     # 计算损失量(向前传播)
@@ -621,7 +634,7 @@ class ClassifyService:
             # 获得当前的学习率
             current_lr = optimizer.param_groups[0]['lr']
             
-            if val_acc > best_acc:
+            if val_acc >= best_acc:
                 # 保存模型
                 best_acc = val_acc
                 best_model_sate = copy.deepcopy(model.state_dict())
@@ -636,5 +649,22 @@ class ClassifyService:
         try:
             # 保存微调后的模型权重
             torch.save(best_model_sate, settings.RESNET50_FINETUNED_PTH_PATH)
+            default_logger.info(f"微调后的模型保存成功：{settings.RESNET50_FINETUNED_PTH_PATH}")
+            
+            with open(Path(settings.RESNET50_FINETUNED_CLASSNAMES_PATH), 'w', encoding='utf-8') as f:
+                json.dump(class_names, f, ensure_ascii=False, indent=2)
+                default_logger.info(f"微调后的模型所能够识别的类别列表已保存：{settings.RESNET50_FINETUNED_CLASSNAMES_PATH}")
+                
+            ## 清除微调的原模型
+            del model
+            # 标记资源可回收
+            gc.collect()
+            if torch.cuda.is_available():
+                torch.cuda.empty_cache()
+            # 载入微调好的模型
+            self._load_model()
+            return True    
+            
         except Exception as e:
             default_logger.error(f"保存微调后的模型失败: {e}")
+            return False
