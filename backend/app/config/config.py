@@ -27,6 +27,9 @@ class Settings(BaseSettings):
     RESNET50_FINETUNED_JSON_DIR: str = f"{JSON_DIR}/resnet_50_finetuned"
     RESNET50_FINETUNED_CLASSNAMES_PATH: str = f"{JSON_DIR}/resnet_50_finetuned/class_name.json"
     
+    # 数据集
+    UPLOAD_DATASET_UNZIPED_DIR: str = f"{DATA_DIR}/upload/dataset/unzipped"
+    
     # 显存检测
     DEVICE: str = "cpu"
     LLM_GPU_LAYERS: int = 0 # 模型层数，默认0层，不使用GPU加速
@@ -71,7 +74,8 @@ settings = Settings()
 for d in [
     settings.MODELS_PTH_DIR,
     settings.RESNET50_FINETUNED_PTH_DIR,
-    settings.RESNET50_FINETUNED_JSON_DIR
+    settings.RESNET50_FINETUNED_JSON_DIR,
+    settings.UPLOAD_DATASET_UNZIPED_DIR
 ]:
     Path(d).mkdir(parents=True, exist_ok=True)
     
