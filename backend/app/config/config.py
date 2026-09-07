@@ -40,6 +40,15 @@ class Settings(BaseSettings):
     CONFIDENCE_THRESHOLD: float = 0.25  # 置信度阈值，默认0.25
     FULL_EPOCHS: int = 20   # 全部训练轮数，默认20(实际中最少40)
 
+    FULL_EPOCHS: int = 20   # 默认20，实际中最少40
+    #空闲
+    TRAIN_STATUS_IDLE:str="idle"
+    #运行
+    TRAIN_STATUS_RUNNING:str="running"
+    # 完成
+    TRAIN_STATUS_FAILED: str = 'failed'
+    TRAIN_STATUS_DONE: str = 'done'
+    
     def _detect_and_configure_device(self):
         # 重置运算设备
         self.DEVICE = 'cpu'

@@ -1,5 +1,4 @@
 import copy
-import random
 import re       # 正则匹配权重键名
 import json     # 读写 JSON 文件（类别名称）
 import math     # 数学计算
@@ -669,3 +668,5 @@ class ClassifyService:
         except Exception as e:
             default_logger.error(f"保存微调后的模型失败: {e}")
             return False
+        
+classify_service = ClassifyService()

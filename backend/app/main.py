@@ -5,13 +5,13 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 import gc
 import uvicorn
-from routers import test, test2, test3, test4
+from routers import test, test2, test3, test4, train
 from utils.common_utils import default_logger
-from config.config import settings
+# from config.config import settings
 # from services.classify_service import load_resnet_50_from_local_safetensors
 # from services.classify_service import load_resnet_50_online
-from services.classify_service import ClassifyService
-from pathlib import Path    # 路径处理
+# from services.classify_service import ClassifyService
+# from pathlib import Path    # 路径处理
 
 # 创建 FastAPI 应用实例
 app = FastAPI(
@@ -35,7 +35,7 @@ async def startup_event():
     # 启动时的初始化操作
     # load_resnet_50_from_local_safetensors()
     # load_resnet_50_online()
-    ClassifyService().finetune(Path(settings.UPLOAD_DATASET_UNZIPED_DIR))
+    # ClassifyService().finetune(Path(settings.UPLOAD_DATASET_UNZIPED_DIR))
     
     default_logger.info("应用启动完成")
 
@@ -50,8 +50,9 @@ async def shutdown_event():
 # 注册路由
 app.include_router(test.router)
 app.include_router(test2.router)
-app.include_router(test3.router)
-app.include_router(test4.router)
+# app.include_router(test3.router)
+# app.include_router(test4.router)
+app.include_router(train.router)
     
 if __name__=="__main__":
     # 启动服务器
