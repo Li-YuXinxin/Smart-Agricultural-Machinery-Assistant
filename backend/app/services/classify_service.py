@@ -78,7 +78,8 @@ class ConsineClassifier(nn.Module):
         weight_norm = F.normalize(self.weight, dim=1, p=2)
         x_norm = F.normalize(x, dim=1, p=2)
         # 计算余弦相似度
-        cos_sim = F.linear(x_norm, weight_norm.t())
+        # cos_sim = F.linear(x_norm, weight_norm)
+        cos_sim = x_norm @ weight_norm
         return cos_sim * self.scale
 
 '''
@@ -158,9 +159,9 @@ def adapt_timm_resnet_state_dict(state_dict):
         if m:
             stage = int(m.group(1))
             block = int(m.group(2))
-            layer_idx = int(m.group(3))
-            kind = m.group(4)
-            suffix = m.group(5)
+            # layer_idx = int(m.group(3))
+            kind = m.group(3)
+            suffix = m.group(4)
             layer_name = f"layer{stage+1}"
             if kind == 'convolution':
                 new_key = f"{layer_name}.{block}.downsample.0.{suffix}"
@@ -438,10 +439,10 @@ class ClassifyService:
             indices = list(range(total_len))
             # 固定随机种子，防止不同计算框架的随机性不一致
             # nn.random.seed(42)
-            torch.manual_seed(42)
+            np.random.seed(42)
             # 打乱列表中元素次序
             # nn.random.shuffle(indices)
-            random.shuffle(indices) 
+            np.random.shuffle(indices)
             # 验证集的长度
             val_len = int(0.2 * total_len)
             # 固定训练集(后百分之八十)
