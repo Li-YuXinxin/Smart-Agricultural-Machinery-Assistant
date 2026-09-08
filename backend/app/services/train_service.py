@@ -10,9 +10,9 @@ from services.classify_service import classify_service
     训练服务类: 采用单例模式，主要用于管理后台训练任务的生命周期。
 '''
 class TrainService:
-    _instance = None
-    _lock = threading.Lock()
-    
+    '''线程安全的单例模式'''
+    _instance = None            # 类属性，用来保存唯一的那个实例。
+    _lock = threading.Lock()    # 线程锁，防止多线程同时创建出多个对象。
     def __new__(cls):
         if cls._instance is None:
             with cls._lock:
@@ -20,6 +20,7 @@ class TrainService:
                     cls._instance = super().__new__(cls)
         return cls._instance
     
+    '''初始化方法'''
     def __init__(self):
         if hasattr(self, '_initialized'):
             return
@@ -34,12 +35,15 @@ class TrainService:
         self._epochs = settings.FULL_EPOCHS
         self.data_dir = Path(settings.UPLOAD_DATASET_UNZIPED_DIR)   # 默认训练目录
 
+    '''保存主事件循环引用，用于跨线程调用异步方法'''
     def set_main_loop(self, main_loop: asyncio.AbstractEventLoop):
         self._main_loop = main_loop
             
+    '''注册状态广播的回调函数'''
     def set_broadcast_callback(self, callback: Callable):
         self._broadcast_callback = callback
 
+    '''调用回调函数广播当前状态'''
     def _broadcast(self):
         if self._broadcast_callback:
             try:
@@ -47,6 +51,7 @@ class TrainService:
             except Exception as e:
                 default_logger.error(f"广播训练状态失败:{e}")
         
+    '''获取状态方法, 返回当前训练状态的字典'''
     def get_status(self):
         # 返回值是字典,前端转换为json字符串
         return {
@@ -54,6 +59,7 @@ class TrainService:
             "result": self.result
         }
         
+    '''初始化训练参数，启动后台训练线程'''
     def start_training(self, data_dir: Path, epochs: Optional[int] = 10):
         if self.status == settings.TRAIN_STATUS_RUNNING:
             default_logger.warning("训练已在运行中")
@@ -82,7 +88,8 @@ class TrainService:
         self.current_task = threading.Thread(target=self._run, args=(data_dir), daemon=True)
         self.current_task.start()
         return True    
-            
+        
+    '''设置停止标志，请求终止训练'''    
     def request_stop(self):
         if self.status == settings.TRAIN_STATUS_RUNNING:
             self.stop_requested = True
@@ -90,6 +97,7 @@ class TrainService:
             return True
         return False
     
+    '''在后台线程中执行实际的模型训练，处理各种状态和异常'''
     def _run(self):
         try:
             success=classify_service.fintune(data_dir=self._data_dir, epoch=self._epochs, stop_check=self.stop_requested)
@@ -113,5 +121,6 @@ class TrainService:
         finally:
             # 无论结果如何，都需要把结果广播给前端
             self._broadcast()
-            
+           
+'''创建全局唯一的训练服务实例''' 
 train_service = TrainService()

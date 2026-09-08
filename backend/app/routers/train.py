@@ -10,7 +10,7 @@ from PIL import Image
 import io
 
 '''
-    websocket管理类
+    websocket管理类: 管理所有WebSocket连接，实现连接建立、断开和消息广播
 '''
 class ConnectioConnnManager:
     def __init__(self):
@@ -36,6 +36,9 @@ class ConnectioConnnManager:
         
 manager = ConnectioConnnManager()
 
+'''
+    状态广播函数: 将训练状态从后台线程广播到主事件循环，推送到前端
+'''
 def broadcast_status(status: dict):
     # 广播状态消息到所有连接的客户端
     loop = train_service._main_loop
@@ -45,8 +48,11 @@ def broadcast_status(status: dict):
 
 train_service.set_broadcast_callback(broadcast_status)
 
-router = APIRouter(prefix="/api/train")
 
+'''
+    WebSocket端点: 建立WebSocket连接，接收前端连接并保持通信
+'''
+router = APIRouter(prefix="/api/train")
 # ws 端点
 @router.websocket("/ws")
 async def websocket_endpoint(websocket: WebSocket):
@@ -67,11 +73,17 @@ async def websocket_endpoint(websocket: WebSocket):
     except Exception as e:
         default_logger.error(f"处理ws消息失败:{e}")
         manager.disconnect(websocket)
-        
+
+'''
+    获取训练状态端点
+'''
 @router.get("/status")
 async def get_train_status():
     return train_service.get_status()
 
+'''
+    停止训练端点
+'''
 @router.post("/stop")
 async def stop_training():
     if train_service.status != settings.TRAIN_STATUS_RUNNING:
@@ -81,6 +93,9 @@ async def stop_training():
         raise HTTPException(status_code=400, detail="终止训练失败")
     return {"message": "训练已终止"}
 
+'''
+    微调ResNet50端点
+'''
 @router.post("/finetune")
 async def finetune_resnet50(request: Request):
     # 从请求头中获取content-type
