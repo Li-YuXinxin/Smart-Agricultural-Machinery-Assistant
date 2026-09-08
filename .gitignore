@@ -74,7 +74,6 @@ backend/data/models/
 # 数据集与压缩包
 # ============================
 backend/data/
-miniprogram/images/
 
 # ============================
 # 测试与覆盖率
