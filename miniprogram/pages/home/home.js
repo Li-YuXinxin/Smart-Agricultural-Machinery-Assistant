@@ -23,6 +23,7 @@ Page({
     if(!url)  return
 
     const tarBarPages = [
+      "pages/home/home",
       "pages/classify/classify",
       "pages/knowledge/knowledge",
       "pages/train/train",

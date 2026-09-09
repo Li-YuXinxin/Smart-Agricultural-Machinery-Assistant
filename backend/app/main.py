@@ -12,6 +12,8 @@ from utils.common_utils import default_logger
 # from services.classify_service import load_resnet_50_online
 # from services.classify_service import ClassifyService
 # from pathlib import Path    # 路径处理
+from services.train_service import train_service
+import asyncio
 
 # 创建 FastAPI 应用实例
 app = FastAPI(
@@ -36,6 +38,8 @@ async def startup_event():
     # load_resnet_50_from_local_safetensors()
     # load_resnet_50_online()
     # ClassifyService().finetune(Path(settings.UPLOAD_DATASET_UNZIPED_DIR))
+    train_service.set_main_loop(asyncio.get_running_loop())
+    default_logger.info("主事件循环已设置")
     
     default_logger.info("应用启动完成")
 

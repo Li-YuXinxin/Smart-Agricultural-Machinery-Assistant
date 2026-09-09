@@ -67,6 +67,7 @@ class TrainService:
 
         # 如果正在训练，则所有状态重置
         self.status = settings.TRAIN_STATUS_RUNNING
+        # default_logger.info(f"状态已设置为: {self.status}")
         self.result = None
         self.stop_requested = False
         # 处理用户传入的参数
@@ -80,12 +81,13 @@ class TrainService:
         else:
             self._data_dir = data_dir
             
-        self._epochs = epochs
+        # self._epochs = epochs
         
         self._broadcast()
+        # default_logger.info("广播完成")
         
         # 启动后台进程
-        self.current_task = threading.Thread(target=self._run, args=(data_dir), daemon=True)
+        self.current_task = threading.Thread(target=self._run, daemon=True)
         self.current_task.start()
         return True    
         
@@ -100,7 +102,7 @@ class TrainService:
     '''在后台线程中执行实际的模型训练，处理各种状态和异常'''
     def _run(self):
         try:
-            success=classify_service.fintune(data_dir=self._data_dir, epoch=self._epochs, stop_check=self.stop_requested)
+            success=classify_service.finetune(data_dir=self._data_dir, epoch=self._epochs, stop_check=lambda e: self.stop_requested)
             if self.stop_requested:
                 # 用户中途结束训练
                 self.status = settings.TRAIN_STATUS_FAILED
