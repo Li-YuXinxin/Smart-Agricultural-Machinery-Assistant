@@ -44,8 +44,8 @@ Page({
         ws.onMessage((res)=>{
           try {
               const get_data = JSON.parse(res.data) // 解析接收到的 JSON 数据
-              console.log('ws接收到数据：', get_data)  // ← 看这里
-              console.log('当前状态:', get_data.status)
+              // console.log('ws接收到数据：', get_data)
+              // console.log('当前状态:', get_data.status)
               this.setData ({status:get_data})      // 更新页面数据中的训练状态
               console.log('ws接收到数据：', get_data)
           }catch(e){
