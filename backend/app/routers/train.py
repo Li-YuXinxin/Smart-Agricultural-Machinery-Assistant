@@ -104,14 +104,9 @@ async def finetune_resnet50(request: Request):
         # 从请求体中获取json字符串
         body = await request.json()
         
-        # ===== 调试日志开始 =====
-        # default_logger.info(f"收到的body: {body}")
-        # default_logger.info(f"body的keys: {body.keys()}")
-        # ===== 调试日志结束 =====
-        
-        
         label = body.get("label")
-        clear_old=body.get("clear_old",False)
+        #TODO-BUG：20260910 clear_old -> clearOld
+        clear_old=body.get("clearOld",False)
         images_base64 = body.get("images", [])
 
         if not images_base64:
@@ -138,17 +133,8 @@ async def finetune_resnet50(request: Request):
         # 新加入的分类目录
         class_dir = train_dir / label
         
-        # ===== 调试日志开始 =====
-        # default_logger.info(f"train_dir路径: {train_dir}")
-        # default_logger.info(f"class_dir路径: {class_dir}")
-        # ===== 调试日志结束 =====
-        
         # 创建分类目录（如果不存在）
         class_dir.mkdir(parents=True, exist_ok=True)
-        
-        # ===== 调试日志开始 =====
-        # default_logger.info(f"目录创建成功")
-        # ===== 调试日志结束 =====
 
         # 实际保存的图片的数量
         saved_count = 0
@@ -157,32 +143,13 @@ async def finetune_resnet50(request: Request):
             try:
                 if "," in b64_data:
                     b64_data = b64_data.split("," , 1)[-1]
-                    # ===== 调试日志开始 =====
-                    # default_logger.info(f"去掉前缀后长度: {len(b64_data)}")
-                    # ===== 调试日志结束 =====
                     
                     # base64字符串的长度必须是4的倍数
                     b64_data += "=" * (4 - len(b64_data) % 4) if len(b64_data) % 4 else ""
-                    img_bytes = base64.b64decode(b64_data)
-                    # ===== 调试日志开始 =====
-                    # default_logger.info(f"base64解码成功，字节数: {len(img_bytes)}")
-                    # ===== 调试日志结束 =====
-                    
-                    img = Image.open(io.BytesIO(img_bytes))
-                    # ===== 调试日志开始 =====
-                    # default_logger.info(f"图片打开成功，格式: {img.format}")
-                    # ===== 调试日志结束 =====
-                    
+                    img_bytes = base64.b64decode(b64_data)                   
+                    img = Image.open(io.BytesIO(img_bytes))            
                     img.verify()
-                    # ===== 调试日志开始 =====
-                    # default_logger.info(f"图片验证通过，格式: {img.format}")
-                    # ===== 调试日志结束 =====
-                    
                     img = Image.open(io.BytesIO(img_bytes))
-                    # ===== 调试日志开始 =====
-                    # default_logger.info(f"图片打开成功，格式: {img.format}")
-                    # ===== 调试日志结束 =====
-                    
                     ext = ".jpg"
                     if img.format == "PNG":
                         ext = ".png"
@@ -190,19 +157,13 @@ async def finetune_resnet50(request: Request):
                         ext = ".gif"
                     elif img.format == "WEBP":
                         ext = ".webp"
-                    # ===== 调试日志开始 =====
-                    # default_logger.info(f"图片格式: {img.format}, 扩展名: {ext}")
-                    # ===== 调试日志结束 =====
+
                     safe_name = f"{label}_{idx+1}{ext}"
                     # 保存图片的路径
                     file_path = class_dir / safe_name
                     with open(file_path, "wb") as f:
                         f.write(img_bytes)
                         saved_count += 1
-                        # ===== 调试日志开始 =====
-                        # default_logger.info(f"第 {idx+1} 张图片保存成功: {safe_name}")
-                        # ===== 调试日志结束 =====
-
             except Exception as e:
                 default_logger.error(f"保存图片失败:{e}")
 

@@ -1,6 +1,6 @@
 // app.js
 App({
   globalData: {
-    apiBase: 'http://localhost:8001'
+    apiBase: 'http://10.213.6.19:8001'
   }
 })

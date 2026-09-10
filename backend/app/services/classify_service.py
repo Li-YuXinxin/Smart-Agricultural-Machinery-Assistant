@@ -543,13 +543,14 @@ class ClassifyService:
 
             model = model.to(self.device)
 
-        # 冻结骨干
-        for param in model.parameters():
-            param.requires_grad = False
+        # TODO-BUG：20260909 删除冻结骨干个解冻fc，因为全量微调不需要，而且会引发灾难遗忘
+        # # 冻结骨干
+        # for param in model.parameters():
+        #     param.requires_grad = False
 
         # 可改变fc
-        for param in model.fc.parameters():
-            param.requires_grad = True
+        # for param in model.fc.parameters():
+        #     param.requires_grad = True
 
         # 使用自定义损失函数(标签平滑)
         criterion = LabelSmoothingCrossEntropy(smoothing=0.1)

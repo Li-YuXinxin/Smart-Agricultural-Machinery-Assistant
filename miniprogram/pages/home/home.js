@@ -1,4 +1,4 @@
-// home/home.js
+// pages/home/home.js
 
 // 获取 app 实例
 const app = getApp()
@@ -23,11 +23,11 @@ Page({
     if(!url)  return
 
     const tarBarPages = [
-      "pages/home/home",
-      "pages/classify/classify",
-      "pages/knowledge/knowledge",
-      "pages/train/train",
-      "pages/chat/chat"
+      '/pages/home/home',
+      '/pages/classify/classify',
+      '/pages/knowledge/knowledge',
+      '/pages/train/train',
+      '/pages/chat/chat'
     ]
 
     if (tarBarPages.includes(url)) {

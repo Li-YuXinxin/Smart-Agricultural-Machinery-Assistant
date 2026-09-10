@@ -20,45 +20,100 @@ Page({
      * 生命周期函数--监听页面加载
      */
     onLoad(options) {
+      this._wsClosed = false        // 页面是否已卸载,用于停止自动重连
+      this._reconnectTimer = null   // 重连定时器句柄
       this.initWebSocket()  // 初始化 WebSocket
       this.updateCanStart()
+    },
+
+    /**
+     * ArrayBuffer(二进制帧)转成UTF-8字符串,避免JSON.parse收到非字符串
+     */
+    buf2str(buf){
+      try{
+        const bytes = new Uint8Array(buf)
+        let bin = ''
+        const chunk = 0x8000
+        for (let i = 0; i < bytes.length; i += chunk){
+          bin += String.fromCharCode.apply(null, bytes.subarray(i, i + chunk))
+        }
+        return decodeURIComponent(escape(bin))
+      }catch(e){
+        return String(buf)
+      }
     },
 
     /**
      * 初始化 ws
      */
     initWebSocket() {
+      // 页面已卸载则不再创建连接
+      if (this._wsClosed) return
+
+      // 清理上一次的重连定时器,避免重复重连
+      if (this._reconnectTimer){
+        clearTimeout(this._reconnectTimer)
+        this._reconnectTimer = null
+      }
+
+      // 关闭可能残留的旧连接,确保同一时间只有一个ws
+      if (this.data.ws){
+        try{ this.data.ws.close({code:1000, reason:'重新连接'}) }catch(e){}
+        this.setData({ws:null})
+      }
+
       try {
+        //初始化ws
+        const apiBase = app.globalData.apiBaseUrl || app.globalData.apiBase
+        if (!apiBase) {
+          console.error('未配置 apiBaseUrl,请检查 app.js')
+          return
+        }
         // 从全局配置中获取 API 基础地址，并去除协议前缀
         const base = app.globalData.apiBase.replace('http://', '').replace('https://', '')
         // ws 的 api 路径
         const wsUrl = `ws://${base}/api/train/ws`
-
         // 创建 WebSocket 连接
         const ws = wx.connectSocket({
-          url: wsUrl,
-          success:()=>{console.log('ws连接成功！')}
+          url: wsUrl
+        })
+
+        ws.onOpen(()=>{
+          console.log('ws 连接成功')
         })
 
         // 配置 ws 的回调函数，当服务器推送训练状态数据时触发
         ws.onMessage((res)=>{
           try {
-              const get_data = JSON.parse(res.data) // 解析接收到的 JSON 数据
-              // console.log('ws接收到数据：', get_data)
-              // console.log('当前状态:', get_data.status)
-              this.setData ({status:get_data})      // 更新页面数据中的训练状态
-              console.log('ws接收到数据：', get_data)
+            let raw = res && res.data
+            // 微信文本帧是字符串,二进制帧是ArrayBuffer;统一转成字符串再解析
+            if (typeof raw === 'string'){
+              raw = raw.trim()
+            }else if (raw instanceof ArrayBuffer){
+              raw = this.buf2str(raw)
+            }else if (raw != null){
+              raw = JSON.stringify(raw)
+            }
+            if (!raw) return
+            const get_data = JSON.parse(res.data) // 解析接收到的 JSON 数据
+            // console.log('ws接收到数据：', get_data)
+            // console.log('当前状态:', get_data.status)
+            this.setData ({status:get_data})      // 更新页面数据中的训练状态
+            console.log('ws接收到数据：', get_data)
           }catch(e){
-              console.error('解析失败：',e)
+            // 收到非JSON内容时只记录,不中断后续消息
+            console.error('解析失败,原始数据:', res && res.data, e)
           }
         })
 
         // 配置 WebSocket 连接关闭回调，当连接意外断开时，自动进行重连
         ws.onClose(()=>{
           console.log('ws 连接关闭, 3 秒后重连')
-          setTimeout(()=>{
+          if (this._wsClosed) return
+          this._reconnectTimer = setTimeout(()=>{
+            this._reconnectTimer = null
             this.initWebSocket()
-          }, 3000)
+          },3000)
         })
 
         // 配置 WebSocket 错误回调，记录连接过程中的错误信息
@@ -96,8 +151,14 @@ Page({
      */
     onUnload() {
       // 手动关闭并释放WebSocket连接，释放资源
-      if (this.data.ws) {
-        this.data.ws.close()
+      this._wsClosed = true
+      if (this._reconnectTimer){
+        clearTimeout(this._reconnectTimer)
+        this._reconnectTimer = null
+      }
+      if(this.data.ws){
+        try{ this.data.ws.close({code:1000, reason:'页面卸载'}) }catch(e){}
+        this.setData({ws:null})
       }
     },
 
@@ -240,26 +301,30 @@ Page({
           title: '开始训练……',
           mask:true
         })
+        //提交给后端的参数
+        const payload ={
+          images:images,
+          label:this.data.label.trim(),
+          clear_old:this.data.clearOld
+        }
 
         // 发起HTTP POST请求，开始模型训练
         wx.request({
           url: `${app.globalData.apiBase}/api/train/finetune`,
           method: 'POST',
-          data: {
-            label: this.data.label,
-            images: images,
-            clear_old: this.data.clearOld
-          },
+          data: payload,
           success: (res) => {
+            wx.hideLoading()
             // 请求成功，判断状态码
             if (res.statusCode === 200) {
-              wx.showToast({ title: '训练成功', icon: 'success' })
+              wx.showToast({ title: '请求训练成功', icon: 'success' })
               // 清空数据，为下一次训练做准备
               this.setData({imageList:[],label:'',clearOld:false,isTraining:false},this.updateCanStart)
             } else {
               // 解析错误信息并展示
               const get_data = res.data
               wx.showToast({ title: get_data.detail || '训练失败', icon: 'none' })
+              this.setData({isTraining:false})
             }
           },
           fail: () => {
@@ -283,19 +348,21 @@ Page({
      * 停止训练
      */
     stopTraining(){
+      const status = this.data.status && this.data.status.status
       // 如果当前状态不是运行中（running），则不执行停止操作
-      if (this.data.status.status != 'running') return
+      if (status != 'running') return
 
       // 发起HTTP POST请求，请求停止训练
       wx.request({
         url: `${app.globalData.apiBase}/api/train/stop`,
         method: 'POST',
-        success: () => {
-          wx.showToast({ title: '停止训练成功', icon: 'none' })
-          this.setData({ 
-            isTraining: false, 
-            fullLoading: false 
-          }, this.updateCanStart)
+        success: (res) => {
+          if(res.statusCode === 200) {
+            wx.showToast({ title: '已请求停止,等待当前轮次结束', icon: 'none' })
+          } else {
+            const get_data = res.data
+            wx.showToast({title:(get_data && get_data.detail) || '停止训练失败',icon:'none'})
+          }
         },
         fail: () => {
           wx.showToast({ title: '停止训练失败', icon: 'none' })
