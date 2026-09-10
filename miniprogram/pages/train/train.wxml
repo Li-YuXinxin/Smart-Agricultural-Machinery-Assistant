@@ -33,7 +33,7 @@
 
     <!-- 操作按钮 -->
     <view>
-      <button bindtap="startFull" disabled="{{!canStart || isTraining}}" loading="{{fullLoading}}">开始训练</button>
+      <button bindtap="startFull" disabled="{{!canStart || isTraining}}">开始训练</button>
     </view>
 
     <!-- 微调状态 -->

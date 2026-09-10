@@ -1,4 +1,6 @@
 import multiprocessing
+
+from backend.app.routers import classify
 # 多线程支持
 multiprocessing.freeze_support()
 from fastapi import FastAPI
@@ -57,6 +59,7 @@ app.include_router(test2.router)
 # app.include_router(test3.router)
 # app.include_router(test4.router)
 app.include_router(train.router)
+app.include_router(classify.router)
     
 if __name__=="__main__":
     # 启动服务器

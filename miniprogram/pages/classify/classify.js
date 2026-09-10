@@ -1,66 +1,74 @@
 // pages/classify/classify.js
+
+// 获取用户数据目录路径（小程序持久化存储目录）
+const USER_DATA_PATH = wx.env.USER_DATA_PATH 
+// 获取全局文件系统管理器，用于文件读写操作 
+const fs = wx.getFileSystemManager()
+
 Page({
 
     /**
      * 页面的初始数据
      */
     data: {
-
+      result: null,   // 识别结果
+      isProcessing: false,    // 是否正在处理中
+      image: {
+        path:'',
+        name:'',
+        size:0,
+        url:''
+      }     // 当前待识别的图片信息
     },
 
     /**
-     * 生命周期函数--监听页面加载
+     * 拍照/选择图片
+     * 调用摄像头拍摄图片，并将临时文件复制到用户目录持久化保存
      */
-    onLoad(options) {
-
+    takePhoto(){
+      wx.chooseMedia({
+        count: 1,
+        mediaType: ['image'],
+        sourceType: ['camera'],
+        camera: 'back',
+        sizeType: ['original'],
+        success: (res) => {
+          // 获取拍摄的临时文件信息
+          const tempFile = res.tempFiles[0]
+          // 复制临时文件到用户目录并保存到data中
+          this.copyAndAddImage(tempFile.tempFilePath, tempFile.size)
+        }
+      })
     },
 
     /**
-     * 生命周期函数--监听页面初次渲染完成
-     */
-    onReady() {
+      * 复制图片到用户目录并添加到页面数据
+      * @param {string} tempPath - 微信临时文件路径
+      * @param {number} size - 文件大小（字节）
+      */
+    copyAndAddImage(tempPath, size) {
+      //给临时文件起名,避免重名
+      const fileName = `img_${Date.now()}_${Math.random().toString(36).slice(2, 6)}.jpg`
+      const cachePath = `${USER_DATA_PATH}/${fileName}`
 
-    },
+      //拷贝到目录
+      try {
+        // 将临时文件复制到用户目录下
+        fs.copyFileSync(tempPath, cachePath)
+        // 从临时路径中提取原始文件名
+        const name = tempPath.split('/').pop() || 'image.jpg'
+        // 更新页面数据
+        this.setData({ image: { path: cachePath, name, size, url: cachePath } })
+        console.log('复制图片成功')
+      } catch (error) {
+        console.error('复制图片失败:', error)
+        wx.showToast({
+          title: '复制图片失败',
+          icon: 'none'
+        })
+      }
 
-    /**
-     * 生命周期函数--监听页面显示
-     */
-    onShow() {
-
-    },
-
-    /**
-     * 生命周期函数--监听页面隐藏
-     */
-    onHide() {
-
-    },
-
-    /**
-     * 生命周期函数--监听页面卸载
-     */
-    onUnload() {
-
-    },
-
-    /**
-     * 页面相关事件处理函数--监听用户下拉动作
-     */
-    onPullDownRefresh() {
-
-    },
-
-    /**
-     * 页面上拉触底事件的处理函数
-     */
-    onReachBottom() {
-
-    },
-
-    /**
-     * 用户点击右上角分享
-     */
-    onShareAppMessage() {
-
+      // TODO 开始识别
+      // this.startRecognize()
     }
 })

@@ -1,4 +1,5 @@
 import copy
+import io
 import re       # 正则匹配权重键名
 import json     # 读写 JSON 文件（类别名称）
 import math     # 数学计算
@@ -6,6 +7,8 @@ import numpy as np  # 数组计算
 import threading    # threading：线程锁（单例模式）
 import gc   # gc：垃圾回收（清理内存）
 from pathlib import Path    # 路径处理
+from io import BytesIO
+from PIL import Image
 
 '''torch：PyTorch 深度学习框架
 torchvision：计算机视觉工具（模型、数据处理、图像变换）'''
@@ -670,4 +673,76 @@ class ClassifyService:
             default_logger.error(f"保存微调后的模型失败: {e}")
             return False
         
+    def predict(self, image_bytes: bytes, top_k: int = 5) -> dict:
+        # 预测(图像识别)
+        if self.model is None:
+            return {
+                "top1": "模型未加载",
+                "top1_confidence": 0.0,
+                "top_5": [{"class": "模型未加载", "confidence": 0.0}]
+            }
+        if not self.model_ready:
+            return {
+                "top1": "模型未加载",
+                "top1_confidence": 0.0,
+                "top_5": [{"class": "模型未加载", "confidence": 0.0}]
+            }
+        if not self.class_names:
+            # 如果可以识别的类型不存在,说明该模型没有经过微调,或者提取类型出错
+            # 那么,默认返回"未知类型"
+            self.class_names = ["未知类型"] * 1000
+
+        try:
+            # 将图片格式化为24位颜色
+            image = Image.open(io.BytesIO(image_bytes)).convert("RGB")
+            # 将图片转换为张量
+            input_tensor = self.transform(image).unsqueeze(0).to(self.device)
+            # 停止梯度计算
+            with torch.no_grad():
+                # 导出结果
+                outputs = self.model(input_tensor)
+                # 计算概率
+                probs = torch.softmax(outputs, dim=1).cpu().numpy()[0]
+            # 取top_k个概率最高的索引(先升序排序,取最大(最后)的5个,然后再降序排序,确保最高概率在前)
+            top_indices = np.argsort(probs)[-top_k:][::-1]
+            top_probs = probs[top_indices]
+            top5 = []
+            
+            # 将索引和概率打包为元组,模仿字典
+            for idx, prob in zip(top_indices, top_probs):
+                class_name = self.class_names[idx] \
+                    if idx < len(self.class_names) else f"未知类型_{idx}"
+                # 保存所有的可能性,包括未知类型(前5个)
+                top5.append({"class": class_name, "confidence": float(prob)})
+                
+            # 最高的命中率
+            top1_confidence = top5[0]["confidence"] if top5 else 0.0
+
+            # 获得命中率的阈值,默认0.25
+            threshold = getattr(settings, "CONFIDENCE_THRESHOLD", 0.25)
+
+            # 如果最高命中率低于阈值，这返回“未知类型”
+            if top1_confidence < threshold:
+                return {
+                    "top1": "未知类型",
+                    "top1_confidence": 0.0,
+                    "top_5": []
+                }
+            
+            return {
+                "top1": top5[0]["class"],
+                "top1_confidence": top1_confidence,
+                "top5": top5
+            }
+            
+            
+        except Exception as e:
+            default_logger.error(f"预测失败:{e}")
+            return {
+                "top1": "预测失败",
+                "top1_confidence": 0.0,
+                "top5":[{"class":"预测失败","confidence":0.0}]
+            }
+    
+# 全局单例 
 classify_service = ClassifyService()

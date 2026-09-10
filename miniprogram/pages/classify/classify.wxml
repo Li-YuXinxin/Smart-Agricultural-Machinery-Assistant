@@ -1,2 +1,23 @@
 <!--pages/classify/classify.wxml-->
-<text>pages/classify/classify.wxml</text>
+<navigation-bar title="虫害识别" back="{{false}}" color="black" background="#F5F5F5"></navigation-bar>
+<view class="container">
+  <view>
+    <button bindtap="takePhoto">
+      拍照识别 
+    </button>
+    <view wx:if = "{{result.length}}">
+      <image src = "{{result.imagePath}}" mode="aspectFill" />
+      <!--结果列表-->
+      <view>
+        <view>
+          <text>
+            类型：{{result.result ? result.result.top1 : '无法识别'}}
+          </text>
+          <text wx:if = "{{result.error}}" >{{result.error}}</text>
+          
+        </view>
+      </view>
+    </view>
+
+  </view>
+</view>
