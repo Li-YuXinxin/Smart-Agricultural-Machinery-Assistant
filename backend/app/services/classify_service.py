@@ -32,11 +32,9 @@ import torch.optim as optim     # PyTorch优化器（AdamW、SGD等，用于更�
 from torch.nn.utils import clip_grad_norm_
 
 '''
-
+    自定义标签平滑损失函数
 '''
 class LabelSmoothingCrossEntropy(nn.Module):
-    # 自定义标签平滑损失函数
-
     def __init__(self, smoothing: float = 0.1):
         super().__init__()
         self.smoothing = smoothing
@@ -548,12 +546,12 @@ class ClassifyService:
 
         # TODO-BUG：20260909 删除冻结骨干个解冻fc，因为全量微调不需要，而且会引发灾难遗忘
         # # 冻结骨干
-        # for param in model.parameters():
-        #     param.requires_grad = False
+        for param in model.parameters():
+            param.requires_grad = False
 
         # 可改变fc
-        # for param in model.fc.parameters():
-        #     param.requires_grad = True
+        for param in model.fc.parameters():
+            param.requires_grad = True
 
         # 使用自定义损失函数(标签平滑)
         criterion = LabelSmoothingCrossEntropy(smoothing=0.1)
