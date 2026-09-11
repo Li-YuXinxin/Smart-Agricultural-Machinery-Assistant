@@ -1,8 +1,8 @@
 // pages/classify/classify.js
 
 // 获取用户数据目录路径（小程序持久化存储目录）
-const USER_DATA_PATH = wx.env.USER_DATA_PATH 
-// 获取全局文件系统管理器，用于文件读写操作 
+const USER_DATA_PATH = wx.env.USER_DATA_PATH
+// 获取全局文件系统管理器，用于文件读写操作
 const fs = wx.getFileSystemManager()
 
 Page({
@@ -68,7 +68,61 @@ Page({
         })
       }
 
-      // TODO 开始识别
-      // this.startRecognize()
+      // 开始识别
+      this.startRecognize()
+    },
+
+    /**
+     * 开始识别：
+     * 1. 读取图片 image → base64
+     * 2. 调用后端API
+     * 3. 把结果显示在页面上
+     */
+    startRecognize(){
+      const imagePath = this.data.image.path
+      if (!imagePath) return
+
+      this.setData({ isProcessing: true, result: null })
+
+      // 1.读取图片为base64
+      fs.readFile({
+        filePath: imagePath,
+        success: (res) => {
+          const base64 = wx.arrayBufferToBase64(res.data)
+          const ext = imagePath.split('.').pop() || 'jpg'
+          const mineType = `image/${ext === 'jpg' ? 'jpeg' : ext}`
+          const base64Data = `data:${mineType};base64,${base64}`
+
+          // 2.调用后端分类API
+          wx.request({
+            url: `${app.globalData.apiBase}/api/classify/`,
+            method: 'POST',
+            data: { image: base64Data },
+            success: (res) => {
+              if (res.statusCode === 200) {
+                // 3.把结果显示在页面上
+                this.setData({
+                  result: {
+                    imagePath: imagePath,
+                    ...res.data
+                  }
+                })
+              } else {
+                wx.showToast({ title: '识别失败', icon: 'none' })
+              }
+            },
+            fail: () => {
+              wx.showToast({ title: '网络错误', icon: 'none' })
+            },
+            complete: () => {
+              this.setData({ isProcessing: false })
+            }
+          })
+        },
+        fail: () => {
+          wx.showToast({ title: '读取图片失败', icon: 'none' })
+          this.setData({ isProcessing: false })
+        }
+      })
     }
 })
