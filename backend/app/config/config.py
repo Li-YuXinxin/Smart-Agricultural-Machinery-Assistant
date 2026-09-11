@@ -41,13 +41,18 @@ class Settings(BaseSettings):
     FULL_EPOCHS: int = 20   # 全部训练轮数，默认20(实际中最少40)
 
     FULL_EPOCHS: int = 20   # 默认20，实际中最少40
-    #空闲
+    # 空闲
     TRAIN_STATUS_IDLE:str="idle"
-    #运行
+    # 运行
     TRAIN_STATUS_RUNNING:str="running"
     # 完成
     TRAIN_STATUS_FAILED: str = 'failed'
     TRAIN_STATUS_DONE: str = 'done'
+    
+    # RAG相关
+    CHROMA_PERSIST_DIR: str = f"{DATA_DIR}/chroma_db"
+    EMBEDDING_MODEL_ID: str = "sentence-transformers/all-MiniLM-L6-v2"
+    EMBEDDING_MODEL_PATH: str = f"{MODELS_SAFETENSORS_DIR}/{EMBEDDING_MODEL_ID}"
     
     def _detect_and_configure_device(self):
         # 重置运算设备
