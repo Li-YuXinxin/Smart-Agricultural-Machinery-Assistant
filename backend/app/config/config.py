@@ -38,9 +38,8 @@ class Settings(BaseSettings):
     # 微调参数
     BATCH_SIZE: int = 16    # 批次大小，默认16
     CONFIDENCE_THRESHOLD: float = 0.25  # 置信度阈值，默认0.25
-    FULL_EPOCHS: int = 20   # 全部训练轮数，默认20(实际中最少40)
+    FULL_EPOCHS: int = 10   # 全部训练轮数，默认20(实际中最少40)
 
-    FULL_EPOCHS: int = 20   # 默认20，实际中最少40
     # 空闲
     TRAIN_STATUS_IDLE:str="idle"
     # 运行

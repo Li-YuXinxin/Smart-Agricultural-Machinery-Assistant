@@ -60,7 +60,7 @@ class TrainService:
         }
         
     '''初始化训练参数，启动后台训练线程'''
-    def start_training(self, data_dir: Path, epochs: Optional[int] = 10):
+    def start_training(self, data_dir: Path, epochs: Optional[int] = settings.FULL_EPOCHS):
         if self.status == settings.TRAIN_STATUS_RUNNING:
             default_logger.warning("训练已在运行中")
             return False
