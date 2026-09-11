@@ -1,4 +1,5 @@
 // pages/classify/classify.js
+const app = getApp()
 
 // 获取用户数据目录路径（小程序持久化存储目录）
 const USER_DATA_PATH = wx.env.USER_DATA_PATH
@@ -18,7 +19,8 @@ Page({
         name:'',
         size:0,
         url:''
-      }     // 当前待识别的图片信息
+      },     // 当前待识别的图片信息
+      error: null // 用来向页面传递错误信息
     },
 
     /**
@@ -81,7 +83,6 @@ Page({
     startRecognize(){
       const imagePath = this.data.image.path
       if (!imagePath) return
-
       this.setData({ isProcessing: true, result: null })
 
       // 1.读取图片为base64
@@ -98,30 +99,32 @@ Page({
             url: `${app.globalData.apiBase}/api/classify/`,
             method: 'POST',
             data: { image: base64Data },
+            hearer: {
+              'Content-Type':'application/json'
+            },
+            // 请求时长不是很长的时候,可以设置超时
+            timeout:(60 * 1000),
             success: (res) => {
               if (res.statusCode === 200) {
                 // 3.把结果显示在页面上
                 this.setData({
                   result: {
                     imagePath: imagePath,
+                    error: null,
                     ...res.data
                   }
                 })
-              } else {
-                wx.showToast({ title: '识别失败', icon: 'none' })
               }
+              console.log('识别结果', res)
             },
-            fail: () => {
-              wx.showToast({ title: '网络错误', icon: 'none' })
-            },
-            complete: () => {
-              this.setData({ isProcessing: false })
+            fail: (err) => {
+              this.setData({
+                error:'识别失败'
+              })
+              console.error('识别失败', err)
+              wx.showToast({ title: '识别失败', icon: 'none' })
             }
           })
-        },
-        fail: () => {
-          wx.showToast({ title: '读取图片失败', icon: 'none' })
-          this.setData({ isProcessing: false })
         }
       })
     }

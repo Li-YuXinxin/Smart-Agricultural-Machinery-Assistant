@@ -1,6 +1,4 @@
 import multiprocessing
-
-from backend.app.routers import classify
 # 多线程支持
 multiprocessing.freeze_support()
 from fastapi import FastAPI
