@@ -53,6 +53,13 @@ class Settings(BaseSettings):
     EMBEDDING_MODEL_ID: str = "sentence-transformers/all-MiniLM-L6-v2"
     EMBEDDING_MODEL_PATH: str = f"{MODELS_SAFETENSORS_DIR}/{EMBEDDING_MODEL_ID}"
     
+    # 知识库相关
+    K: int = 4 # 默认所搜4个文档相关片段
+    ALLOWED_EXTENSIOnS: list = [".pdf", ".docx", ".doc", ".txt"]    # 允许的文件扩展名
+    UPLOAD_FILE_DIR: str = f"{DATA_DIR}/uploads/files"  # 上传文件目录
+    MAX_UPLOAD_FILE_SIZE: int = 1024 * 1024 * 10 # 最大上传文件大小 10MB
+    
+    
     def _detect_and_configure_device(self):
         # 重置运算设备
         self.DEVICE = 'cpu'
@@ -88,7 +95,10 @@ for d in [
     settings.MODELS_PTH_DIR,
     settings.RESNET50_FINETUNED_PTH_DIR,
     settings.RESNET50_FINETUNED_JSON_DIR,
-    settings.UPLOAD_DATASET_UNZIPED_DIR
+    settings.RESNET50_PTH_CACHE_DIR,
+    settings.UPLOAD_DATASET_UNZIPED_DIR,
+    settings.CHROMA_PERSIST_DIR,
+    settings.UPLOAD_FILE_DIR
 ]:
     Path(d).mkdir(parents=True, exist_ok=True)
     
