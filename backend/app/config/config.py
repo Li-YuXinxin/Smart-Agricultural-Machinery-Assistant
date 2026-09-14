@@ -17,6 +17,7 @@ class Settings(BaseSettings):
     # 图像识别目录
     RESNET50_MODEL_ID: str = "microsoft/resnet-50"
     RESNET50_MODEL_PATH: str = f"{MODELS_SAFETENSORS_DIR}/{RESNET50_MODEL_ID}"
+    RESNET50_PTH_CACHE_DIR: str = f"{MODELS_PTH_DIR}/resnet_50_cache"
     
     # 微调后的图像识别模型目录
     RESNET50_FINETUNED_PTH_DIR: str = f"{MODELS_PTH_DIR}/resnet_50_finetuned"
@@ -55,9 +56,16 @@ class Settings(BaseSettings):
     
     # 知识库相关
     K: int = 4 # 默认所搜4个文档相关片段
-    ALLOWED_EXTENSIOnS: list = [".pdf", ".docx", ".doc", ".txt"]    # 允许的文件扩展名
-    UPLOAD_FILE_DIR: str = f"{DATA_DIR}/uploads/files"  # 上传文件目录
+    ALLOWED_EXTENSIONS: list = [".pdf", ".docx", ".doc", ".txt"]    # 允许的文件扩展名
+    UPLOAD_FILE_DIR: str = f"{DATA_DIR}/upload/files"  # 上传文件目录
     MAX_UPLOAD_FILE_SIZE: int = 1024 * 1024 * 10 # 最大上传文件大小 10MB
+    
+    # LLM模型路径
+    LLM_MODEL_ID: str = "LoveSeaW/Qwen2.5-1.5b-instruct-gguf"
+    LLM_MODEL_PATH: str = f"{MODELS_GGUF_DIR}/{LLM_MODEL_ID}"
+    
+    # 上下文大小(一次性最多处理的token数)
+    LLM_CONTEXT_SIZE: int = 2048
     
     
     def _detect_and_configure_device(self):

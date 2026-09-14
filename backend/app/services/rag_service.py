@@ -8,7 +8,7 @@ from utils.common_utils import default_logger   # 自建模块: 日志
 from config.config import settings              # 自建模块: 配置
 from services.LLM_Service import llm_service
 from pathlib import Path
-from langchain_community.document_loaders import PyPDFLoader, DocxLoader, TextLoader
+from langchain_community.document_loaders import PyPDFLoader, Docx2txtLoader, TextLoader
 
 '''提示词模板'''
 class PromptTemplate: 
@@ -57,7 +57,17 @@ class RagService:
         self._init_chromadb()
         
         
-    '''初始化向量数据库'''  
+    '''检查向量化模型是否存在'''
+    def _check_embedding_model(self):
+        model_path = Path(settings.EMBEDDING_MODEL_PATH)
+        if model_path.exists():
+            self._embedding_model_dir = str(model_path)
+            default_logger.info(f"向量化模型已存在: {self._embedding_model_dir}")
+        else:
+            self._embedding_model_dir = None
+            default_logger.warning(f"向量化模型不存在: {model_path}, 首次加载时将自动下载")
+
+    '''初始化向量数据库'''
     def _init_chromadb(self):
         try:
             # 初始化向量数据库
@@ -145,7 +155,7 @@ class RagService:
             if suffix == ".pdf":
                 loader = PyPDFLoader(file_path)
             elif suffix == ".docx":
-                loader = DocxLoader(file_path)
+                loader = Docx2txtLoader(file_path)
             elif suffix == ".txt":
                 encodings = ["utf-8", "gbk", "gb2312", "latin-1"]
                 

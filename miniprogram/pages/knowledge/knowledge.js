@@ -1,66 +1,57 @@
 // pages/knowledge/knowledge.js
+const app = getApp()
 Page({
 
     /**
      * 页面的初始数据
      */
     data: {
-
+      loading:false,
+      result:null
     },
 
     /**
-     * 生命周期函数--监听页面加载
+     * 选择文件
      */
-    onLoad(options) {
-
-    },
-
-    /**
-     * 生命周期函数--监听页面初次渲染完成
-     */
-    onReady() {
-
-    },
-
-    /**
-     * 生命周期函数--监听页面显示
-     */
-    onShow() {
-
-    },
-
-    /**
-     * 生命周期函数--监听页面隐藏
-     */
-    onHide() {
-
-    },
-
-    /**
-     * 生命周期函数--监听页面卸载
-     */
-    onUnload() {
-
-    },
-
-    /**
-     * 页面相关事件处理函数--监听用户下拉动作
-     */
-    onPullDownRefresh() {
-
-    },
-
-    /**
-     * 页面上拉触底事件的处理函数
-     */
-    onReachBottom() {
-
-    },
-
-    /**
-     * 用户点击右上角分享
-     */
-    onShareAppMessage() {
-
+    chooseFile(){
+      wx.chooseMessageFile({
+        count:1,
+        type:'file',
+        extension:['txt', 'doc','docx','pdf'],
+        success:(res)=>{
+          const file = res.tempFiles[0]
+          wx.showLoading({title:'上传中...'})
+          wx.uploadFile({
+            url:`${app.globalData.apiBase}/api/knowledge/upload`,
+            filePath:file.path,
+            name: 'file',
+            success:(res)=>{
+              try {
+                const result = JSON.parse(res.data)
+                //保存结果
+                this.setData({result:result})
+                wx.hideLoading()
+                wx.showToast({
+                  title:'上传成功',
+                  icon:'success'
+                })
+              } catch(e){
+                this.setData({result:null})
+                wx.hideLoading()
+                wx.showToast({
+                  title:'上传失败',
+                  icon:'none'
+                })
+              }
+            },
+            fail:(res)=>{
+              wx.showToast({
+                title: '无法与服务器通信',
+                icon: 'none'
+              })
+            }
+          })
+        }
+      })
     }
 })

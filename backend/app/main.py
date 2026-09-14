@@ -6,7 +6,7 @@ from fastapi.middleware.cors import CORSMiddleware
 import gc
 import uvicorn
 from routers import test, test2, test3, test4
-from routers import train, classify
+from routers import train, classify, knowledge
 from utils.common_utils import default_logger
 # from config.config import settings
 # from services.classify_service import load_resnet_50_from_local_safetensors
@@ -59,6 +59,7 @@ async def shutdown_event():
 # app.include_router(test4.router)
 app.include_router(train.router)
 app.include_router(classify.router)
+app.include_router(knowledge.router)
     
 if __name__=="__main__":
     # 启动服务器
