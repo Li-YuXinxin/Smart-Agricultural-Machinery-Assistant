@@ -54,7 +54,7 @@ class LLM_Service:
             # 标志模型已加载
             self._loaded = True
             default_logger.info(f"模型加载完成,设备是:{settings.DEVICE}")
-            self.llm = None
+            # self.llm = None
 
         except Exception as e:
             default_logger.error(f"加载模型失败:{e}")
