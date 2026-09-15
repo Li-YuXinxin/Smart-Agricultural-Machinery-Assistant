@@ -5,7 +5,7 @@ from llama_cpp import Llama
 from utils.common_utils import default_logger   # 自建模块: 日志
 from config.config import settings              # 自建模块: 配置
 
-class LLMService:
+class LLM_Service:
     '''线程安全的单例模式'''
     _instance = None            # 类属性，用来保存唯一的那个实例。
     _lock = threading.Lock()    # 线程锁，防止多线程同时创建出多个对象。
@@ -24,12 +24,11 @@ class LLMService:
             return
         self._initialized = True
 
-        self.model_path = Path(settings.LLM_MODEL_PATH)
+        # self.model_path = Path(settings.LLM_MODEL_PATH)
+        self.model_path = settings.LLM_MODEL_PATH
         self.llm = None
         self._loaded = False
-
-    # def generate():
-    #     return "hello world"
+        self._load_lock = threading.Lock()
 
     def _load_model(self):
 
@@ -38,6 +37,9 @@ class LLMService:
 
         # 确定模型加载的设备
         n_gpu_layers = settings.LLM_GPU_LAYERS
+        with self._load_lock:                 # ← 加锁
+            if self._loaded:                  # 双重检查
+                return
 
         try:
             # 加载压缩后的模型DEVICE
@@ -52,6 +54,7 @@ class LLMService:
             # 标志模型已加载
             self._loaded = True
             default_logger.info(f"模型加载完成,设备是:{settings.DEVICE}")
+            self.llm = None
 
         except Exception as e:
             default_logger.error(f"加载模型失败:{e}")
@@ -129,4 +132,4 @@ class LLMService:
         # 处理模型为空的情况
         return result if isinstance(result, str) else ""
         
-llm_service = LLMService()
+llm_service = LLM_Service()

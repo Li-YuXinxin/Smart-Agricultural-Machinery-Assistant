@@ -31,7 +31,7 @@ async def generate(request: ChatRequest):
             full_response = answer
             if sources:
                 source_names = sources[:10]
-                full_response += f"\n来源文档: {', '.join(source_names)}"
+                full_response += f"\n来源文档: {','.join(source_names)}"
             else:
                 full_response += "\n未使用本地知识库"
         else:
@@ -47,14 +47,6 @@ async def generate(request: ChatRequest):
         default_logger.error(f"问答失败：{e}")
         yield f"data:{json.dumps({'error':'', 'done':True})}"
 
-@router.post("/")
-async def chat(request: ChatRequest):
-    default_logger.info(f"开始处理: {request.message}")
-    return StreamingResponse(
-        generate(request),
-        media_type="text/event-stream"
-    )
-
 @router.post("/stream")
 async def chat_stream(request: ChatRequest):
     default_logger.info(f"开始处理: {request.message}")
@@ -63,8 +55,8 @@ async def chat_stream(request: ChatRequest):
         media_type="text/event-stream",
         # 确保客户端保持连接
         headers={
-            "Cache-Control": "no-cache",
-            "Connection": "keep-alive",
-            "X-Accel-Buffering": "no"
+            "Connection": "keep-alive", 
+            #  禁用缓存,确保客户端实时接收数据
+            "Cache-Control":"no-cache"
         }
     )

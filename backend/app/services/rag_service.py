@@ -1,6 +1,4 @@
 import threading
-import asyncio
-
 from langchain_chroma import Chroma
 from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_text_splitters import RecursiveCharacterTextSplitter
@@ -23,7 +21,7 @@ class PromptTemplate:
 请以专业，耐心的态度，回答用户的问题。
 """
     
-
+    
 '''
     RAG服务类: 采用单例模式，主要用于管理向量数据库和检索器。
 '''
@@ -51,22 +49,10 @@ class RagService:
         self._embedding_loaded = False      # 向量化模型是否已加载
         self._embedding_model_dir = None    # 向量化模型目录
         
-        # 检查向量化模型是否存在
-        self._check_embedding_model()
         # 初始化向量数据库
         self._init_chromadb()
         
         
-    '''检查向量化模型是否存在'''
-    def _check_embedding_model(self):
-        model_path = Path(settings.EMBEDDING_MODEL_PATH)
-        if model_path.exists():
-            self._embedding_model_dir = str(model_path)
-            default_logger.info(f"向量化模型已存在: {self._embedding_model_dir}")
-        else:
-            self._embedding_model_dir = None
-            default_logger.warning(f"向量化模型不存在: {model_path}, 首次加载时将自动下载")
-
     '''初始化向量数据库'''
     def _init_chromadb(self):
         try:
@@ -121,7 +107,7 @@ class RagService:
 
         # 如果向量化模型再次加载失败,则返回False
         if not self._embedding_loaded:
-            default_logger.error("嵌入模型加载失败")
+            default_logger.info("嵌入模型加载失败")
             return False
         
         # 如果向量化模型已加载,则设置向量数据库的向量化函数

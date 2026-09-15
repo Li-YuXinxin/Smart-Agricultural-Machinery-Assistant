@@ -24,8 +24,8 @@ Page({
      */
     getTime() {
       const now = new Date()
-      const pre = `${now.getFullYear()}-${(now.getMonth() + 1).toString().padStart(2, '0')}-${(now.getDay() + 1).toString().padStart(2, '0')}`
-      return `${pre}-${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`
+      // const pre = `${now.getFullYear()}-${(now.getMonth() + 1).toString().padStart(2, '0')}-${(now.getDay() + 1).toString().padStart(2, '0')}`
+      return `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`
     },
     
     /**
@@ -134,6 +134,8 @@ Page({
             char3 = uint8Array[i++]
             out += String.fromCharCode((c & 0x0F) << 12 | (char2 & 0x3F) << 6 | (char3 & 0x3F))
             break
+          default:
+            break
         }
       }
       return out
@@ -145,7 +147,4 @@ Page({
     scrollBottom() {
       this.setData({ scrollIntoView: 'bottom' })
     },
-
-
-   
 })
