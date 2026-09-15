@@ -296,11 +296,13 @@ class RagService:
 
             answer = llm_service.generate(
                 system_prompt=system_prompt,
-                user_prompt=user_prompt,
+                prompt=user_prompt,
                 temperature=0.5,
                 max_tokens=512,
             )
 
+            # 从检索到的文档中提取来源文件路径
+            source = [doc.metadata.get("source", "未知来源") for doc in docs]
             # 对向量片段的来源进行去重(保持顺序)
             source = list(dict.fromkeys(source))
 

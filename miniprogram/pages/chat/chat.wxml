@@ -1,8 +1,22 @@
 <!--pages/chat/chat.wxml-->
 <view class="container">
   <view>
-    <view>
-    
+    <text>AI问答</text>
+  </view>
+  <scroll-view scroll-y="true" scroll-into-view="{{scrollIntoView}}">
+    <view wx:for="{{messages}}" wx:key="time">
+      <view>
+        {{item.role == 'user' ? '我' : 'AI'}}
+      </view>
+      <view>
+        {{item.content}}
+      </view>
     </view>
+    <view id="bottom"></view>
+  </scroll-view>
+
+  <view>
+    <input placeholder="请输入问题" value="{{inputText}}" bindinput="onInput" />
+    <button bindtap="sendMessage" disabled="{{!inputText && isStreaming}}">提交</button>
   </view>
 </view>
