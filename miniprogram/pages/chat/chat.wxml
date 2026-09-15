@@ -1,2 +1,8 @@
 <!--pages/chat/chat.wxml-->
-<text>pages/chat/chat.wxml</text>
+<view class="container">
+  <view>
+    <view>
+    
+    </view>
+  </view>
+</view>
