@@ -305,7 +305,7 @@ Page({
         const payload ={
           images:images,
           label:this.data.label.trim(),
-          clear_old:this.data.clearOld
+          clearOld:this.data.clearOld
         }
 
         // 发起HTTP POST请求，开始模型训练

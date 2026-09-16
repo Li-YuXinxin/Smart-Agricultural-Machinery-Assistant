@@ -39,7 +39,7 @@ class Settings(BaseSettings):
     # 微调参数
     BATCH_SIZE: int = 16    # 批次大小，默认16
     CONFIDENCE_THRESHOLD: float = 0.25  # 置信度阈值，默认0.25
-    FULL_EPOCHS: int = 10   # 全部训练轮数，默认20(实际中最少40)
+    FULL_EPOCHS: int = 10   # 全部训练轮数(实际中最少40)
 
     # 空闲
     TRAIN_STATUS_IDLE:str="idle"
@@ -61,7 +61,7 @@ class Settings(BaseSettings):
     MAX_UPLOAD_FILE_SIZE: int = 1024 * 1024 * 10 # 最大上传文件大小 10MB
     
     # LLM模型路径
-    LLM_MODEL_ID: str = "LoveSeaW/Qwen2.5-1.5b-instruct-gguf"
+    LLM_MODEL_ID: str = "LoveSeaW/Qwen2.5-1.5b-instruct-gguf/qwen2.5-1.5b-instruct-q4_k_m.gguf"
     LLM_MODEL_PATH: str = f"{MODELS_GGUF_DIR}/{LLM_MODEL_ID}"
     
     # 上下文大小(一次性最多处理的token数)

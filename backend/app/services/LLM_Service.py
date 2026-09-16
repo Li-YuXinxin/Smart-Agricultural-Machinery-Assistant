@@ -92,19 +92,22 @@ class LLM_Service:
             )
             
             # 异步流式返回
+            # 关键: yield 放在内部函数里, chat 本身保持普通函数
             if stream:
-                try:
-                    # 遍历模型返回每个块
-                    for chunk in response:
-                        if 'choices' in chunk and len(chunk['choices']) > 0:
-                            delta = chunk['choices'][0]['delta'].get('delta', {})
-                            content = delta.get('content', '')
-                            if content:
-                                # 发送内容，异步流式返回
-                                yield content
-                except Exception as e:
-                    default_logger.error(f"异步流式返回失败: {e}")
-                    yield f"错误: {str(e)}"
+                def stream_generator():
+                    try:
+                        # 遍历模型返回每个块
+                        for chunk in response:
+                            if 'choices' in chunk and len(chunk['choices']) > 0:
+                                delta = chunk['choices'][0]['delta'].get('delta', {})
+                                content = delta.get('content', '')
+                                if content:
+                                    # 发送内容，异步流式返回
+                                    yield content
+                    except Exception as e:
+                        default_logger.error(f"异步流式返回失败: {e}")
+                        yield f"错误: {str(e)}"
+                return stream_generator()
             else:
                 if 'choices' in response and len(response['choices']) > 0:
                     # 含有答案, 则返回答案内容

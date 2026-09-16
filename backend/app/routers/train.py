@@ -139,6 +139,9 @@ async def finetune_resnet50(request: Request):
         # 实际保存的图片的数量
         saved_count = 0
 
+        # 统计目录下已有文件数量，序号从已有数量之后开始，避免覆盖
+        existing_count = len([f for f in class_dir.iterdir() if f.is_file()])
+
         for idx, b64_data in enumerate(images_base64):
             try:
                 if "," in b64_data:
@@ -158,7 +161,7 @@ async def finetune_resnet50(request: Request):
                     elif img.format == "WEBP":
                         ext = ".webp"
 
-                    safe_name = f"{label}_{idx+1}{ext}"
+                    safe_name = f"{label}_{existing_count + idx + 1}{ext}"
                     # 保存图片的路径
                     file_path = class_dir / safe_name
                     with open(file_path, "wb") as f:
