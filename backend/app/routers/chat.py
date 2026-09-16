@@ -10,7 +10,7 @@ router = APIRouter(prefix="/api/chat")
 
 class ChatRequest(BaseModel):
     # 会话ID
-    session_id: str
+    # session_id: str
     # 用户问题
     message: str
     #温度

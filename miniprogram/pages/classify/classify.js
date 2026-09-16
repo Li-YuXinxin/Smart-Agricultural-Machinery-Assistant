@@ -99,7 +99,7 @@ Page({
             url: `${app.globalData.apiBase}/api/classify/`,
             method: 'POST',
             data: { image: base64Data },
-            hearer: {
+            header: {
               'Content-Type':'application/json'
             },
             // 请求时长不是很长的时候,可以设置超时
