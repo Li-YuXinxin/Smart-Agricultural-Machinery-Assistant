@@ -3,20 +3,22 @@
   <view>
     <!-- 文件上传按钮 -->
     <view>
-      <button bindtap="chooseImages">选择图片</button>
+      <button bindtap="chooseImages">选择植物图片</button>
       <button bindtap="clearImages">清除图片</button>
     </view>
 
     <!-- 文件列表 -->
-    <view class="file-row" wx:if="{{imageList.length > 0}}">
-      <view wx:for="{{imageList}}" wx:key="path">
-        <image class="thumb" src="{{item.path}}" mode="aspectFill"></image>
-        <text class="file-name">{{index+1}}.{{item.name}}</text>
-        <text class="remove" bindtap="removeImage" data-index="{{index}}"></text>
+    <view class="image-section" wx:if="{{imageList.length > 0}}">
+      <view class="image-count">已选 {{imageList.length}}/9 张图片</view>
+      <view class="image-grid">
+        <view class="grid-item" wx:for="{{imageList}}" wx:key="path">
+          <image class="thumb" src="{{item.path}}" mode="aspectFill"></image>
+          <text class="remove" catchtap="removeImage" data-index="{{index}}">×</text>
+        </view>
       </view>
     </view>
-    <view wx:else>
-      暂未添加任何图片
+    <view class="empty-hint" wx:else>
+      <text>暂未添加任何图片</text>
     </view>
 
     <!-- 分类名称 -->
@@ -26,9 +28,13 @@
     </view>
 
     <!--  是否重新训练 -->
-    <view>
-      <checkbox checked="{{clearOld}}" bindtap="onClearOldChange" />
-      <text>重新训练</text>
+    <view class="checkbox-row">
+      <checkbox-group bindchange="onClearOldChange">
+        <label>
+          <checkbox value="clearOld" checked="{{clearOld}}" />
+          <text>重新训练</text>
+        </label>
+      </checkbox-group>
     </view>
 
     <!-- 操作按钮 -->

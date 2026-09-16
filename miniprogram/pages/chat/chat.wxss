@@ -1,1 +1,180 @@
 /* pages/chat/chat.wxss */
+
+.chat-page {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  background-color: #f5f5f5;
+}
+
+/* ========== 顶部标题 ========== */
+.chat-header {
+  background-color: #fff;
+  padding: 80rpx 32rpx 24rpx;
+  text-align: center;
+  border-bottom: 1rpx solid #e8e8e8;
+}
+
+.chat-title {
+  font-size: 34rpx;
+  font-weight: 600;
+  color: #333;
+}
+
+/* ========== 消息列表 ========== */
+.chat-body {
+  flex: 1;
+  padding: 24rpx;
+  overflow-y: auto;
+}
+
+/* 欢迎提示 */
+.welcome-hint {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding-top: 200rpx;
+}
+
+.welcome-text {
+  font-size: 32rpx;
+  color: #666;
+  margin-bottom: 12rpx;
+}
+
+.welcome-sub {
+  font-size: 24rpx;
+  color: #999;
+}
+
+/* 消息行 */
+.message-row {
+  display: flex;
+  margin-bottom: 32rpx;
+}
+
+/* 用户消息靠右 */
+.message-user {
+  flex-direction: row-reverse;
+}
+
+/* AI消息靠左 */
+.message-ai {
+  flex-direction: row;
+}
+
+/* 头像 */
+.avatar {
+  width: 72rpx;
+  height: 72rpx;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  font-size: 24rpx;
+  font-weight: 600;
+  color: #fff;
+}
+
+.avatar-user {
+  background-color: #07c160;
+  margin-left: 16rpx;
+}
+
+.avatar-ai {
+  background-color: #576b95;
+  margin-right: 16rpx;
+}
+
+/* 气泡容器 */
+.bubble-wrap {
+  max-width: 70%;
+  display: flex;
+  flex-direction: column;
+}
+
+/* 气泡通用 */
+.bubble {
+  padding: 20rpx 28rpx;
+  border-radius: 16rpx;
+  word-break: break-all;
+  line-height: 1.6;
+}
+
+.bubble-text {
+  font-size: 28rpx;
+}
+
+/* 用户气泡 — 绿色 */
+.bubble-user {
+  background-color: #07c160;
+  color: #fff;
+  border-top-right-radius: 4rpx;
+}
+
+/* AI气泡 — 白色 */
+.bubble-ai {
+  background-color: #fff;
+  color: #333;
+  border-top-left-radius: 4rpx;
+  box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.06);
+}
+
+/* 来源文档 */
+.source-text {
+  display: block;
+  margin-top: 16rpx;
+  padding-top: 12rpx;
+  border-top: 1rpx solid #eee;
+  font-size: 22rpx;
+  color: #aaa;
+  line-height: 1.5;
+}
+
+/* 时间 */
+.msg-time {
+  font-size: 20rpx;
+  color: #bbb;
+  margin-top: 8rpx;
+}
+
+.message-user .msg-time {
+  text-align: right;
+}
+
+/* ========== 底部输入栏 ========== */
+.input-bar {
+  display: flex;
+  align-items: center;
+  padding: 16rpx 24rpx;
+  padding-bottom: calc(16rpx + env(safe-area-inset-bottom));
+  background-color: #fff;
+  border-top: 1rpx solid #e8e8e8;
+}
+
+.chat-input {
+  flex: 1;
+  height: 72rpx;
+  background-color: #f5f5f5;
+  border-radius: 36rpx;
+  padding: 0 28rpx;
+  font-size: 28rpx;
+}
+
+.send-btn {
+  margin-left: 16rpx;
+  padding: 0 32rpx;
+  height: 72rpx;
+  line-height: 72rpx;
+  background-color: #07c160;
+  color: #fff;
+  border-radius: 36rpx;
+  font-size: 28rpx;
+  text-align: center;
+}
+
+.send-disabled {
+  background-color: #a0deb5;
+}

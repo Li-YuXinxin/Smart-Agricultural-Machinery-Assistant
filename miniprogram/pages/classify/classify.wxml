@@ -1,20 +1,27 @@
 <!--pages/classify/classify.wxml-->
-<navigation-bar title="虫害识别" back="{{false}}" color="black" background="#F5F5F5"></navigation-bar>
+<navigation-bar title="拍照识花" back="{{false}}" color="black" background="#F5F5F5"></navigation-bar>
 <view class="container">
   <view>
-    <button bindtap="takePhoto">拍照识别</button>
-    <view wx:if = "{{result}}">
-      <image src = "{{result.imagePath}}" mode="aspectFill" />
+    <button bindtap="takePhoto">拍照识别植物</button>
+    <view wx:if="{{result}}">
+      <image src="{{result.imagePath}}" mode="aspectFill" />
       <!--结果列表-->
       <view>
         <view>
           <text>
-            类型：{{result ? result.top1 : '无法识别'}}
+            品种：{{result.top1}}
           </text>
-          <text wx:if = "{{result.error}}" >{{result.error}}</text>
+          <text wx:if="{{result.confidenceText}}">  置信度：{{result.confidenceText}}</text>
+          <text wx:if="{{result.error}}">{{result.error}}</text>
+        </view>
+        <!-- Top-5 候选 -->
+        <view wx:if="{{result.top5 && result.top5.length > 1}}">
+          <text>其他可能：</text>
+          <view wx:for="{{result.top5}}" wx:key="class" wx:if="{{index > 0}}">
+            <text>{{item.class}}（{{item.confidenceText}}）</text>
+          </view>
         </view>
       </view>
     </view>
-
   </view>
 </view>

@@ -10,10 +10,10 @@ Page({
      */
   data: {
     features: [
-      { title: '模型训练', url: '/pages/train/train' },
-      { title: '稠密识别', url: '/pages/classify/classify' },
-      { title: '知识库管理', url: '/pages/knowledge/knowledge' },
-      { title: '智能问答', url: '/pages/chat/chat' }
+      { title: '拍照识花', desc: '拍照识别植物品种', url: '/pages/classify/classify' },
+      { title: '添加新品种', desc: '训练扩展可识别品种', url: '/pages/train/train' },
+      { title: '养护笔记', desc: '上传养护文档构建知识库', url: '/pages/knowledge/knowledge' },
+      { title: '养护顾问', desc: 'AI 问答解答养护问题', url: '/pages/chat/chat' }
     ]
   },
 

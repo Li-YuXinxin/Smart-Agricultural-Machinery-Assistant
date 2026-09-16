@@ -93,6 +93,7 @@ Page({
         // 流式交互,需要设置chunked编码,还需要设置responseType为arraybuffer(缓冲区)
         enableChunked: true,
         responseType: 'arraybuffer',
+        timeout: 200000,
         success: (res) => {
           // 因为流式交互会多次交互,所以不能再这里交互成功的处理逻辑
         },
@@ -101,8 +102,14 @@ Page({
           clearTimeout(timeoutId)
           // 交互状态清空
           this.setData({ isStreaming: false })
-          wx.showToast({ title: '交互失败', icon: 'none' })
-          console.error('交互失败:', err)
+          // 删除空的ai占位消息
+          const msgs = this.data.messages
+          if (msgs.length && msgs[msgs.length-1].role === 'ai' && msgs[msgs.length-1].content === '思考中……') {
+            msgs.pop()
+            this.setData({ messages: msgs })
+          }
+          wx.showToast({ title: '请求失败，请重试', icon: 'none' })
+          console.error('请求失败:', err)
         }
       })
 

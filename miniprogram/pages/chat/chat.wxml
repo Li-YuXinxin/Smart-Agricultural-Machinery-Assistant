@@ -1,22 +1,40 @@
 <!--pages/chat/chat.wxml-->
-<view class="container">
-  <view>
-    <text>AI问答</text>
+<view class="chat-page">
+  <!-- 顶部标题栏 -->
+  <view class="chat-header">
+    <text class="chat-title">养护顾问</text>
   </view>
-  <scroll-view scroll-y="true" scroll-into-view="{{scrollIntoView}}">
-    <view wx:for="{{messages}}" wx:key="time">
-      <view>
-        {{item.role == 'user' ? '我' : 'AI'}}
+
+  <!-- 消息列表 -->
+  <scroll-view class="chat-body" scroll-y="true" scroll-into-view="{{scrollIntoView}}" scroll-with-animation>
+    <!-- 欢迎提示（无消息时） -->
+    <view wx:if="{{messages.length === 0}}" class="welcome-hint">
+      <text class="welcome-text">🌿 你好，我是养护顾问</text>
+      <text class="welcome-sub">输入你的植物养护问题，AI 将结合知识库为你解答</text>
+    </view>
+
+    <view wx:for="{{messages}}" wx:key="index" class="message-row {{item.role === 'user' ? 'message-user' : 'message-ai'}}">
+      <!-- 头像 -->
+      <view class="avatar {{item.role === 'user' ? 'avatar-user' : 'avatar-ai'}}">
+        <text>{{item.role === 'user' ? '我' : 'AI'}}</text>
       </view>
-      <view>
-        {{item.content}}
+      <!-- 气泡 -->
+      <view class="bubble-wrap">
+        <view class="bubble {{item.role === 'user' ? 'bubble-user' : 'bubble-ai'}}">
+          <text class="bubble-text" user-select>{{item.content}}</text>
+          <text wx:if="{{item.source}}" class="source-text" user-select>{{item.source}}</text>
+        </view>
+        <text class="msg-time">{{item.time}}</text>
       </view>
     </view>
     <view id="bottom"></view>
   </scroll-view>
 
-  <view>
-    <input placeholder="请输入问题" value="{{inputText}}" bindinput="onInput" />
-    <button bindtap="sendMessage" disabled="{{!inputText && isStreaming}}">提交</button>
+  <!-- 底部输入栏 -->
+  <view class="input-bar">
+    <input class="chat-input" placeholder="请输入问题" value="{{inputText}}" bindinput="onInput" bindconfirm="sendMessage" confirm-type="send" />
+    <view class="send-btn {{!inputText || isStreaming ? 'send-disabled' : ''}}" bindtap="sendMessage">
+      <text>发送</text>
+    </view>
   </view>
 </view>

@@ -35,13 +35,13 @@
       "list": [
         {
           "pagePath": "pages/classify/classify",
-          "text": "虫害识别",
+          "text": "识花",
           "iconPath": "images/classify.png",
           "selectedIconPath": "images/classify_active.png"
         },
         {
           "pagePath": "pages/train/train",
-          "text": "模型训练",
+          "text": "训练",
           "iconPath": "images/train.png",
           "selectedIconPath": "images/train_active.png"
         },
@@ -53,13 +53,13 @@
         },
         {
           "pagePath": "pages/knowledge/knowledge",
-          "text": "知识库管理",
+          "text": "养护笔记",
           "iconPath": "images/knowledge.png",
           "selectedIconPath": "images/knowledge_active.png"
         },
         {
           "pagePath": "pages/chat/chat",
-          "text": "智能问答",
+          "text": "养护顾问",
           "iconPath": "images/chat.png",
           "selectedIconPath": "images/chat_active.png"
         }
