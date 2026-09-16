@@ -65,7 +65,9 @@ class Settings(BaseSettings):
     LLM_MODEL_PATH: str = f"{MODELS_GGUF_DIR}/{LLM_MODEL_ID}"
     
     # 上下文大小(一次性最多处理的token数)
-    LLM_CONTEXT_SIZE: int = 2048
+    LLM_CONTEXT_SIZE: int = 4096
+    # LLM推理线程数
+    LLM_THREADS: int = 4
     
     
     def _detect_and_configure_device(self):

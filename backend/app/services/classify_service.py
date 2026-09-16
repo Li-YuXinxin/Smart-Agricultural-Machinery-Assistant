@@ -724,7 +724,7 @@ class ClassifyService:
                 return {
                     "top1": "未知类型",
                     "top1_confidence": 0.0,
-                    "top_5": []
+                    "top5": []
                 }
             
             return {

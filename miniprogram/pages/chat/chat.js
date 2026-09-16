@@ -194,12 +194,22 @@ Page({
     onDone(timeoutId){
       // 清空计时器
       clearTimeout(timeoutId)
+      // 拆分来源文档信息
+      const msgs = this.data.messages
+      const last = msgs[msgs.length - 1]
+      if (last && last.role === 'ai') {
+        const idx = last.content.indexOf('\n来源文档:')
+        if (idx !== -1) {
+          last.source = last.content.substring(idx + 1)
+          last.content = last.content.substring(0, idx)
+        }
+      }
       // 交互状态清空
-      this.setData({isStreaming:false})
-      wx.showToast({
-        title:'交互完成',
-        icon:'none'
-      })      
+      this.setData({isStreaming:false, messages: msgs})
+      // wx.showToast({
+      //   title:'交互完成',
+      //   icon:'none'
+      // })
     },
 
     /**

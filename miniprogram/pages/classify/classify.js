@@ -109,21 +109,30 @@ Page({
               'Content-Type':'application/json'
             },
             // 请求时长不是很长的时候,可以设置超时
-            timeout:(60 * 1000),
+            timeout:(120 * 1000),
             success: (res) => {
               wx.hideLoading()
               this.setData({ isProcessing: false })
               if (res.statusCode === 200) {
-                // 3.把结果显示在页面上
+                // 3.把结果显示在页面上，置信度转为数字并格式化
+                const raw = res.data
+                const conf = Number(raw.top1_confidence)
+                // 给 top5 每项加上预处理好的置信度文本
+                const top5 = (raw.top5 || []).map(item => ({
+                  ...item,
+                  confidenceText: (Number(item.confidence) * 100).toFixed(1) + '%'
+                }))
                 this.setData({
                   result: {
                     imagePath: imagePath,
                     error: null,
-                    ...res.data
+                    ...raw,
+                    top1_confidence: conf,
+                    confidenceText: isNaN(conf) ? '' : (conf * 100).toFixed(1) + '%',
+                    top5: top5
                   }
                 })
               }
-              console.log('识别结果', res)
             },
             fail: (err) => {
               wx.hideLoading()
