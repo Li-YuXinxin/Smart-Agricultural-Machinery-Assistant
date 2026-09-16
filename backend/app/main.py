@@ -5,7 +5,6 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 import gc
 import uvicorn
-# from routers import test, test2, test3, test4
 from routers import train, classify, knowledge, chat
 from utils.common_utils import default_logger
 # from config.config import settings
@@ -53,10 +52,6 @@ async def shutdown_event():
     default_logger.info("应用关闭完成")
 
 # 注册路由
-# app.include_router(test.router)
-# app.include_router(test2.router)
-# app.include_router(test3.router)
-# app.include_router(test4.router)
 app.include_router(train.router)
 app.include_router(classify.router)
 app.include_router(knowledge.router)
