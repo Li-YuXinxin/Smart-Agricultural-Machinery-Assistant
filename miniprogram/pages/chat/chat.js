@@ -54,18 +54,30 @@ Page({
       // ai回答部分
       const aiMsg = {
         role: 'ai',
-        content: '',
+        content: '思考中……',
         time: this.getTime()
       }
 
-      let timeoutId = setTimeout(() => {
-        if (this.data.isStreaming) {
-          // 思考超时,停止交互
-          this.setData({ isStreaming: false })
-          // 显示提示(持续3秒)
-          wx.showToast({ title: '思考超时', icon: 'none', duration: 3000 })
-        }
-      }, (180 * 1000))
+      // 保存ai回答到messages数组中，防止用户等待最终的回答时间过长
+      // 同时确保即使超过token限制，也能显示前半部分的答案
+      this.setData({messages:[...this.data.messages,aiMsg]})
+
+      let timeoutId = this.checkChunkTimeout(null)
+      // let timeoutId = setTimeout(() => {
+      //   if (this.data.isStreaming) {
+      //     // 思考超时,停止交互
+      //     this.setData({ isStreaming: false })
+      //     // 显示提示(持续3秒)
+      //     wx.showToast({ title: '思考超时', icon: 'none', duration: 3000 })
+      //     // 如果第一次接受的消息就超时
+      //     const msgs = this.data.messages
+      //     if (msgs.length && msgs[msgs.length-1].role === 'ai' && msgs[msgs.length-1].content === '') {
+      //         // 删除最后一个ai消息,因为ai消息是空的
+      //         msgs.pop()
+      //         this.setData({ messages: msgs })
+      //     }
+      //   }
+      // }, (180 * 1000))
 
       const requestTask = wx.request({
         url: `${app.globalData.apiBase}/api/chat/stream`,
@@ -101,6 +113,34 @@ Page({
         // 将接收到的数据转换为字符串
         const uint8Array = new Uint8Array(res.data)
         const str = this.uft8ArrayToString(uint8Array)
+        // 拼凑来自后端的答案（片段）
+        buffer += str
+        const lines = buffer.split('\n')
+        // 如果最后一行没有形成完整的行(\n结尾),保存该行,拼接下一次收到的信息,但如果最后一行是完整的行,则直接解析该行,并清空缓存
+        buffer = lines.pop() || ''
+
+        for (const line of lines) {
+          if (line.startsWith('data:')) {
+            // 真正的信息在data:后面
+            const jsonStr = line.substring(5).trim()
+            if (!jsonStr) continue
+            try {
+              const data = JSON.parse(jsonStr)
+              if (data.done) {
+                // 后端发送完毕
+                this.onDone(timeoutId)
+              } else if (data.chunk !== undefined) {
+                // 后续还有信息
+                timeoutId = this.onChunk(data.chunk, timeoutId)
+              } else if (data.error) {
+                // 如果发生错误
+                this.onError(data.error, timeoutId)
+              }
+            } catch(e) {
+              console.error('解析JSON失败:', e)
+            }
+          }
+        }
       })
     },
 
@@ -147,4 +187,84 @@ Page({
     scrollBottom() {
       this.setData({ scrollIntoView: 'bottom' })
     },
+
+    /**
+     * 后端发送完毕,停止交互
+     */
+    onDone(timeoutId){
+      // 清空计时器
+      clearTimeout(timeoutId)
+      // 交互状态清空
+      this.setData({isStreaming:false})
+      wx.showToast({
+        title:'交互完成',
+        icon:'none'
+      })      
+    },
+
+    /**
+     * 每次片段交互
+     */
+    onChunk(chunk, timeoutId){
+      // 每次片段交互
+
+      timeoutId = this.checkChunkTimeout(timeoutId)
+
+      const msgs = this.data.messages
+      const last = msgs[msgs.length-1]
+      if (last.role === 'ai') {
+        // ai消息,拼接内容
+        last.content += chunk
+        this.setData({messages:msgs})
+        // 滚动到底部
+        this.scrollBottom()
+      }
+
+      // 为下一次片段计时
+      return timeoutId
+    },
+
+    /**
+     * 交互失败
+     */
+    onError(err, timeoutId){
+      if (timeoutId) 
+        clearTimeout(timeoutId)
+
+      this.setData({isStreaming:false})
+      wx.showToast({
+        title:'交互失败',
+        icon:'none'
+      })
+      console.error('交互失败:',err)
+      // 如果第一次接受的消息就出错
+      const msgs = this.data.messages
+      if (msgs.length && msgs[msgs.length-1].role === 'ai' && msgs[msgs.length-1].content === '') {
+          // 删除最后一个ai消息,因为ai消息是空的
+          msgs.pop()
+          this.setData({messages:msgs})
+      }
+    },
+
+    checkChunkTimeout(timeoutId) {
+      // 清空计时器
+      if(timeoutId)
+        clearTimeout(timeoutId)
+
+      return setTimeout(() => {
+        if (this.data.isStreaming) {
+          // 思考超时,停止交互
+          this.setData({ isStreaming: false })
+          // 显示提示(持续3秒)
+          wx.showToast({ title: '思考超时', icon: 'none', duration: 3000 })
+          // 如果第一次接受的消息就超时
+          const msgs = this.data.messages
+          if (msgs.length && msgs[msgs.length-1].role === 'ai' && msgs[msgs.length-1].content === '') {
+              // 删除最后一个ai消息,因为ai消息是空的
+              msgs.pop()
+              this.setData({ messages: msgs })
+          }
+        }
+      }, (180 * 1000))
+    }
 })

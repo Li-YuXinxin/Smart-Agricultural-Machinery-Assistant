@@ -118,7 +118,7 @@ class LLM_Service:
             default_logger.error(f"LLM模型调用失败，{e}")
             return f"LLM模型调用失败:{str(e)}, 请重试!"
         
-    def generate(self, prompt:str, 
+    def generate(self, user_prompt:str, 
                  system_prompt:Optional[str]=None, 
                  temperature:float=0.7, 
                  max_tokens:int = 512)->str:
@@ -127,7 +127,7 @@ class LLM_Service:
         if system_prompt:
             messages.append({"role":"system","content":system_prompt})
         # 用户提示（包含用户问题）
-        messages.append({"role":"user","content":prompt})
+        messages.append({"role":"user","content":user_prompt})
         result = self.chat(messages, temperature, max_tokens)
         # 处理模型为空的情况
         return result if isinstance(result, str) else ""
