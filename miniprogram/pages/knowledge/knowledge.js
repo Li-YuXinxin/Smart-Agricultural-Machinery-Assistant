@@ -24,13 +24,18 @@ Page({
         url: `${app.globalData.apiBase}/api/knowledge/list`,
         method: 'GET',
         success: (res) => {
+          console.log('文档列表响应:', res.statusCode, res.data)
           if (res.statusCode === 200) {
             const docs = (res.data.documents || []).map(doc => ({
               ...doc,
               sizeText: this.formatSize(doc.size)
             }))
+            console.log('解析后文档数:', docs.length)
             this.setData({ documents: docs })
           }
+        },
+        fail: (err) => {
+          console.error('文档列表请求失败:', err)
         }
       })
     },

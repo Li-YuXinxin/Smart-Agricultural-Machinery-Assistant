@@ -2,7 +2,7 @@
 <navigation-bar title="拍照识花" back="{{false}}" color="black" background="#F5F5F5"></navigation-bar>
 <view class="container">
   <view>
-    <button bindtap="takePhoto">拍照识别植物</button>
+    <button bindtap="takePhoto" disabled="{{isProcessing}}">拍照/选图识别</button>
     <view wx:if="{{result}}">
       <image src="{{result.imagePath}}" mode="aspectFill" />
       <!--结果列表-->

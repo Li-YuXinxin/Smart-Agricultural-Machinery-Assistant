@@ -3,6 +3,7 @@
   <!-- 顶部标题栏 -->
   <view class="chat-header">
     <text class="chat-title">养护顾问</text>
+    <text class="chat-clear" bindtap="clearChat">清空</text>
   </view>
 
   <!-- 消息列表 -->
@@ -11,6 +12,12 @@
     <view wx:if="{{messages.length === 0}}" class="welcome-hint">
       <text class="welcome-text">🌿 你好，我是养护顾问</text>
       <text class="welcome-sub">输入你的植物养护问题，AI 将结合知识库为你解答</text>
+      <!-- 常见问题快捷按钮 -->
+      <view class="hot-questions">
+        <view class="hot-q-item" wx:for="{{hotQuestions}}" wx:key="*this" bindtap="onHotQuestion" data-q="{{item}}">
+          <text>{{item}}</text>
+        </view>
+      </view>
     </view>
 
     <view wx:for="{{messages}}" wx:key="index" class="message-row {{item.role === 'user' ? 'message-user' : 'message-ai'}}">
@@ -21,8 +28,14 @@
       <!-- 气泡 -->
       <view class="bubble-wrap">
         <view class="bubble {{item.role === 'user' ? 'bubble-user' : 'bubble-ai'}}">
-          <text class="bubble-text" user-select>{{item.content}}</text>
-          <text wx:if="{{item.source}}" class="source-text" user-select>{{item.source}}</text>
+          <!-- 用户消息：纯文本 -->
+          <text wx:if="{{item.role === 'user'}}" class="bubble-text" user-select>{{item.content}}</text>
+          <!-- AI消息：Markdown渲染 -->
+          <view wx:if="{{item.role === 'ai'}}" class="bubble-text">
+            <rich-text nodes="{{item.htmlContent}}" user-select></rich-text>
+            <text wx:if="{{isStreaming && index === messages.length - 1}}" class="typing-cursor {{cursorVisible ? 'cursor-show' : 'cursor-hide'}}">|</text>
+          </view>
+          <text wx:if="{{item.source}}" class="source-text source-link" bindtap="previewSource" data-source="{{item.source}}">{{item.source}}</text>
         </view>
         <text class="msg-time">{{item.time}}</text>
       </view>

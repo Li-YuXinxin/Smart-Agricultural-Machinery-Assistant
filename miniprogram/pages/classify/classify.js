@@ -31,7 +31,7 @@ Page({
       wx.chooseMedia({
         count: 1,
         mediaType: ['image'],
-        sourceType: ['camera'],
+        sourceType: ['album', 'camera'],
         camera: 'back',
         sizeType: ['original'],
         success: (res) => {

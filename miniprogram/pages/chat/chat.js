@@ -10,6 +10,89 @@ Page({
       inputText: '',        // 用户输入的内容
       isStreaming: false,   // 是否正在等待AI回复
       scrollIntoView: '',   // 滚动定位到的元素id
+      // 常见问题
+      hotQuestions: [
+        '绿萝叶子发黄怎么办？',
+        '多肉多久浇一次水？',
+        '室内养花适合什么光照？',
+        '植物长虫了怎么处理？'
+      ],
+      // 打字动画
+      cursorVisible: true,
+    },
+
+    /**
+     * 点击常见问题
+     */
+    onHotQuestion(e) {
+      const question = e.currentTarget.dataset.q
+      this.setData({ inputText: question })
+      this.sendMessage()
+    },
+
+    /**
+     * 清空对话
+     */
+    clearChat() {
+      if (this.data.messages.length === 0) return
+      wx.showModal({
+        title: '清空对话',
+        content: '确定要清空所有对话记录吗？',
+        success: (res) => {
+          if (res.confirm) {
+            this.setData({ messages: [] })
+          }
+        }
+      })
+    },
+
+    /**
+     * 启动光标闪烁
+     */
+    _cursorTimer: null,
+    startCursorBlink() {
+      this._cursorTimer = setInterval(() => {
+        this.setData({ cursorVisible: !this.data.cursorVisible })
+      }, 500)
+    },
+    stopCursorBlink() {
+      if (this._cursorTimer) {
+        clearInterval(this._cursorTimer)
+        this._cursorTimer = null
+      }
+    },
+
+    /**
+     * Markdown → HTML（轻量解析，支持常用格式）
+     */
+    mdToHtml(md) {
+      if (!md) return ''
+      let html = md
+      // 转义HTML特殊字符
+      html = html.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+      // 代码块 ```...```
+      html = html.replace(/```(\w*)\n?([\s\S]*?)```/g, '<pre style="background:#f6f8fa;padding:16rpx;border-radius:8rpx;overflow-x:auto;font-size:24rpx;line-height:1.5;"><code>$2</code></pre>')
+      // 标题 ### / ## / #
+      html = html.replace(/^### (.+)$/gm, '<h3 style="font-size:30rpx;font-weight:700;margin:16rpx 0 8rpx;">$1</h3>')
+      html = html.replace(/^## (.+)$/gm, '<h2 style="font-size:32rpx;font-weight:700;margin:20rpx 0 10rpx;">$1</h2>')
+      html = html.replace(/^# (.+)$/gm, '<h1 style="font-size:36rpx;font-weight:700;margin:24rpx 0 12rpx;">$1</h1>')
+      // 行内代码
+      html = html.replace(/`([^`]+)`/g, '<code style="background:#f0f0f0;padding:2rpx 8rpx;border-radius:4rpx;font-size:24rpx;">$1</code>')
+      // 粗体 + 斜体
+      html = html.replace(/\*\*\*(.+?)\*\*\*/g, '<strong><em>$1</em></strong>')
+      // 粗体
+      html = html.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+      // 斜体
+      html = html.replace(/\*(.+?)\*/g, '<em>$1</em>')
+      // 有序列表（兼容 1. / 1、 / 1）以及前导空格）
+      html = html.replace(/^\s*(\d+)\s*[\.、\)）]\s*(.+)$/gm, '<p style="margin:4rpx 0;padding-left:16rpx;">$1. $2</p>')
+      // 无序列表（兼容 - / * / • 以及前导空格）
+      html = html.replace(/^\s*[\-\*•]\s+(.+)$/gm, '<p style="margin:4rpx 0;padding-left:16rpx;">• $1</p>')
+      // 分割线
+      html = html.replace(/^---+$/gm, '<hr style="border:none;border-top:1rpx solid #eee;margin:16rpx 0;"/>')
+      // 换行
+      html = html.replace(/\n/g, '<br/>')
+      return html
     },
 
     /**
@@ -55,6 +138,7 @@ Page({
       const aiMsg = {
         role: 'ai',
         content: '思考中……',
+        htmlContent: '<span style="color:#999;">思考中……</span>',
         time: this.getTime()
       }
 
@@ -62,6 +146,7 @@ Page({
       // 同时确保即使超过token限制，也能显示前半部分的答案
       this.setData({messages:[...this.data.messages,aiMsg]})
 
+      this.startCursorBlink()
       let timeoutId = this.checkChunkTimeout(null)
       // let timeoutId = setTimeout(() => {
       //   if (this.data.isStreaming) {
@@ -100,6 +185,7 @@ Page({
         fail: (err) => {
           // 清空计时器
           clearTimeout(timeoutId)
+          this.stopCursorBlink()
           // 交互状态清空
           this.setData({ isStreaming: false })
           // 删除空的ai占位消息
@@ -210,7 +296,10 @@ Page({
           last.source = last.content.substring(idx + 1)
           last.content = last.content.substring(0, idx)
         }
+        // 最终渲染Markdown为HTML
+        last.htmlContent = this.mdToHtml(last.content)
       }
+      this.stopCursorBlink()
       // 交互状态清空
       this.setData({isStreaming:false, messages: msgs})
       // wx.showToast({
@@ -236,7 +325,11 @@ Page({
         } else {
           last.content += chunk
         }
+        // 实时转换Markdown为HTML
+        last.htmlContent = this.mdToHtml(last.content)
         this.setData({messages:msgs})
+        // 调试：打印AI原始回复内容
+        if (last.content.length < 200) console.log('AI原始内容:', last.content)
         // 滚动到底部
         this.scrollBottom()
       }
@@ -249,9 +342,10 @@ Page({
      * 交互失败
      */
     onError(err, timeoutId){
-      if (timeoutId) 
+      if (timeoutId)
         clearTimeout(timeoutId)
 
+      this.stopCursorBlink()
       this.setData({isStreaming:false})
       wx.showToast({
         title:'交互失败',
@@ -267,6 +361,43 @@ Page({
       }
     },
 
+    /**
+     * 预览来源文档
+     */
+    previewSource(e) {
+      const source = e.currentTarget.dataset.source
+      // 来源格式: "来源文档: E:\...\uuid_filename.pdf" 或 "来源文档: xxx.pdf,yyy.docx"
+      const raw = source.replace('来源文档:', '').trim()
+      const paths = raw.split(',').map(s => s.trim()).filter(Boolean)
+      if (paths.length === 0) return
+      // 提取文件名（去掉路径部分，只保留文件名）
+      let fileName = paths[0]
+      if (fileName.includes('\\')) fileName = fileName.split('\\').pop()
+      if (fileName.includes('/')) fileName = fileName.split('/').pop()
+      if (!fileName) return
+      const downloadUrl = `${app.globalData.apiBase}/api/knowledge/download?name=${encodeURIComponent(fileName)}`
+      wx.showLoading({ title: '加载中...' })
+      wx.downloadFile({
+        url: downloadUrl,
+        success: (res) => {
+          wx.hideLoading()
+          if (res.statusCode === 200) {
+            wx.openDocument({
+              filePath: res.tempFilePath,
+              showMenu: true,
+              fail: () => { wx.showToast({ title: '无法预览此文件', icon: 'none' }) }
+            })
+          } else {
+            wx.showToast({ title: '文件不存在或已被删除', icon: 'none' })
+          }
+        },
+        fail: () => {
+          wx.hideLoading()
+          wx.showToast({ title: '下载失败', icon: 'none' })
+        }
+      })
+    },
+
     checkChunkTimeout(timeoutId) {
       // 清空计时器
       if(timeoutId)
@@ -275,6 +406,7 @@ Page({
       return setTimeout(() => {
         if (this.data.isStreaming) {
           // 思考超时,停止交互
+          this.stopCursorBlink()
           this.setData({ isStreaming: false })
           // 显示提示(持续3秒)
           wx.showToast({ title: '思考超时', icon: 'none', duration: 3000 })

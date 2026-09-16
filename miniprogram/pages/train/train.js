@@ -218,7 +218,16 @@ Page({
      * 将图片列表置为空数组，并同步更新"开始训练"按钮状态
      */
     clearImages(){
-      this.setData({ imageList: [] }, this.updateCanStart)
+      if (this.data.imageList.length === 0) return
+      wx.showModal({
+        title: '确认清除',
+        content: `确定要清除已选的 ${this.data.imageList.length} 张图片吗？`,
+        success: (res) => {
+          if (res.confirm) {
+            this.setData({ imageList: [] }, this.updateCanStart)
+          }
+        }
+      })
     },
 
     /**

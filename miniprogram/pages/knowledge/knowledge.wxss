@@ -1,17 +1,35 @@
 /* pages/knowledge/knowledge.wxss */
 
+.format-hint {
+  display: block;
+  text-align: center;
+  font-size: 22rpx;
+  color: #bbb;
+  margin-top: 12rpx;
+}
+
 .doc-section {
   width: 100%;
   padding: 32rpx;
   box-sizing: border-box;
 }
 
+.doc-section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20rpx;
+}
+
 .doc-section-title {
   font-size: 28rpx;
   font-weight: 600;
   color: #333;
-  margin-bottom: 20rpx;
-  display: block;
+}
+
+.doc-refresh {
+  font-size: 24rpx;
+  color: #576b95;
 }
 
 .doc-list {

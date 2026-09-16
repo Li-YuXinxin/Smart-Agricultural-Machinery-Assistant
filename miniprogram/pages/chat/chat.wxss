@@ -11,14 +11,25 @@
 .chat-header {
   background-color: #fff;
   padding: 80rpx 32rpx 24rpx;
-  text-align: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   border-bottom: 1rpx solid #e8e8e8;
+  position: relative;
 }
 
 .chat-title {
   font-size: 34rpx;
   font-weight: 600;
   color: #333;
+}
+
+.chat-clear {
+  position: absolute;
+  right: 32rpx;
+  bottom: 24rpx;
+  font-size: 26rpx;
+  color: #576b95;
 }
 
 /* ========== 消息列表 ========== */
@@ -46,7 +57,35 @@
 .welcome-sub {
   font-size: 24rpx;
   color: #999;
+  margin-bottom: 32rpx;
 }
+
+/* 常见问题 */
+.hot-questions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16rpx;
+  justify-content: center;
+  padding: 0 32rpx;
+}
+
+.hot-q-item {
+  background: #fff;
+  border: 1rpx solid #e8e8e8;
+  border-radius: 32rpx;
+  padding: 12rpx 28rpx;
+  font-size: 24rpx;
+  color: #576b95;
+}
+
+/* 打字光标 */
+.typing-cursor {
+  font-weight: 700;
+  color: #07c160;
+  margin-left: 2rpx;
+}
+.cursor-show { opacity: 1; }
+.cursor-hide { opacity: 0; }
 
 /* 消息行 */
 .message-row {
@@ -131,6 +170,11 @@
   font-size: 22rpx;
   color: #aaa;
   line-height: 1.5;
+}
+
+.source-link {
+  color: #576b95;
+  text-decoration: underline;
 }
 
 /* 时间 */
