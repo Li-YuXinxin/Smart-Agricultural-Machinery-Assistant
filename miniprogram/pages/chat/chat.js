@@ -243,8 +243,8 @@ Page({
       console.error('交互失败:',err)
       // 如果第一次接受的消息就出错
       const msgs = this.data.messages
-      if (msgs.length && msgs[msgs.length-1].role === 'ai' && msgs[msgs.length-1].content === '') {
-          // 删除最后一个ai消息,因为ai消息是空的
+      if (msgs.length && msgs[msgs.length-1].role === 'ai' && msgs[msgs.length-1].content === '思考中……') {
+          // 删除最后一个ai消息,因为ai消息还没有收到任何内容
           msgs.pop()
           this.setData({messages:msgs})
       }
@@ -263,8 +263,8 @@ Page({
           wx.showToast({ title: '思考超时', icon: 'none', duration: 3000 })
           // 如果第一次接受的消息就超时
           const msgs = this.data.messages
-          if (msgs.length && msgs[msgs.length-1].role === 'ai' && msgs[msgs.length-1].content === '') {
-              // 删除最后一个ai消息,因为ai消息是空的
+          if (msgs.length && msgs[msgs.length-1].role === 'ai' && msgs[msgs.length-1].content === '思考中……') {
+              // 删除最后一个ai消息,因为ai消息还没有收到任何内容
               msgs.pop()
               this.setData({ messages: msgs })
           }

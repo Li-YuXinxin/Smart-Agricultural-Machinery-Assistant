@@ -249,7 +249,7 @@ Page({
      * 重新训练复选框状态变化事件处理
      */
     onClearOldChange(e) {
-      this.setData({ clearOld: e.detail.value > 0 }, this.updateCanStart)
+      this.setData({ clearOld: e.detail.value.length > 0 }, this.updateCanStart)
     },
 
     /**

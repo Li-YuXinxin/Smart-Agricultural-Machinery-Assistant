@@ -84,10 +84,16 @@ Page({
       const imagePath = this.data.image.path
       if (!imagePath) return
       this.setData({ isProcessing: true, result: null })
+      wx.showLoading({ title: '识别中...', mask: true })
 
       // 1.读取图片为base64
       fs.readFile({
         filePath: imagePath,
+        fail: () => {
+          wx.hideLoading()
+          this.setData({ isProcessing: false })
+          wx.showToast({ title: '读取图片失败', icon: 'none' })
+        },
         success: (res) => {
           const base64 = wx.arrayBufferToBase64(res.data)
           const ext = imagePath.split('.').pop() || 'jpg'
@@ -105,6 +111,8 @@ Page({
             // 请求时长不是很长的时候,可以设置超时
             timeout:(60 * 1000),
             success: (res) => {
+              wx.hideLoading()
+              this.setData({ isProcessing: false })
               if (res.statusCode === 200) {
                 // 3.把结果显示在页面上
                 this.setData({
@@ -118,7 +126,9 @@ Page({
               console.log('识别结果', res)
             },
             fail: (err) => {
+              wx.hideLoading()
               this.setData({
+                isProcessing: false,
                 error:'识别失败'
               })
               console.error('识别失败', err)
