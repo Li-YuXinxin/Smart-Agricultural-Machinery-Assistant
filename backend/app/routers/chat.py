@@ -38,14 +38,14 @@ async def generate(request: ChatRequest):
             full_response = "未找到相关答案"
 
         #为了保证以后可以修改为流式输出，所以这里模仿流式输出的格式
-        yield f"data:{json.dumps({'chunk':full_response,'done':False})}"
+        yield f"data:{json.dumps({'chunk':full_response,'done':False})}\n"
         default_logger.info(f"生成完成：{full_response}")
-        yield f"data:{json.dumps({'chunk':'', 'done':True})}"
+        yield f"data:{json.dumps({'chunk':'', 'done':True})}\n"
 
 
     except Exception as e:
         default_logger.error(f"问答失败：{e}")
-        yield f"data:{json.dumps({'error':'', 'done':True})}"
+        yield f"data:{json.dumps({'error':'', 'done':True})}\n"
 
 @router.post("/stream")
 async def chat_stream(request: ChatRequest):

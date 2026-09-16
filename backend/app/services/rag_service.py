@@ -282,7 +282,7 @@ class RagService:
 
             answer = llm_service.generate(
                 system_prompt=system_prompt,
-                prompt=user_prompt,
+                user_prompt=user_prompt,
                 temperature=0.5,
                 max_tokens=512,
             )

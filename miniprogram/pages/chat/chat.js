@@ -214,7 +214,11 @@ Page({
       const last = msgs[msgs.length-1]
       if (last.role === 'ai') {
         // ai消息,拼接内容
-        last.content += chunk
+        if (last.content === '思考中……') {
+          last.content = chunk
+        } else {
+          last.content += chunk
+        }
         this.setData({messages:msgs})
         // 滚动到底部
         this.scrollBottom()
