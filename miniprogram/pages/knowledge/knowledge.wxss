@@ -1,1 +1,79 @@
 /* pages/knowledge/knowledge.wxss */
+
+.doc-section {
+  width: 100%;
+  padding: 32rpx;
+  box-sizing: border-box;
+}
+
+.doc-section-title {
+  font-size: 28rpx;
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 20rpx;
+  display: block;
+}
+
+.doc-list {
+  background: #fff;
+  border-radius: 12rpx;
+  overflow: hidden;
+}
+
+.doc-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 24rpx 28rpx;
+  border-bottom: 1rpx solid #f0f0f0;
+}
+
+.doc-item:last-child {
+  border-bottom: none;
+}
+
+.doc-info {
+  flex: 1;
+  overflow: hidden;
+}
+
+.doc-name {
+  font-size: 28rpx;
+  color: #333;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  display: block;
+}
+
+.doc-meta {
+  font-size: 22rpx;
+  color: #bbb;
+  margin-top: 6rpx;
+  display: block;
+}
+
+.doc-actions {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.doc-preview {
+  font-size: 26rpx;
+  color: #576b95;
+  padding: 8rpx 16rpx;
+}
+
+.doc-delete {
+  font-size: 26rpx;
+  color: #fa5151;
+  padding: 8rpx 16rpx;
+}
+
+.doc-empty {
+  text-align: center;
+  padding: 48rpx 0;
+  color: #bbb;
+  font-size: 26rpx;
+}

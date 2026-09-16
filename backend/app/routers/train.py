@@ -56,6 +56,7 @@ train_service.set_broadcast_callback(broadcast_status)
     WebSocket端点: 建立WebSocket连接，接收前端连接并保持通信
 '''
 router = APIRouter(prefix="/api/train")
+
 # ws 端点
 @router.websocket("/ws")
 async def websocket_endpoint(websocket: WebSocket):

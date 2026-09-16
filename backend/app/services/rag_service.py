@@ -317,7 +317,37 @@ class RagService:
     def delete_document(self,file_path: str)->dict:
         if not self._ensure_components():
             default_logger.error("数据库未加载或未就绪")
-            return {"succcess":False,"trunk_count":0,"message": "数据库组件未就绪"}
-            
-# 全局单例 
+            return {"success":False,"message": "数据库组件未就绪"}
+        try:
+            # 从 ChromaDB 中删除该文档的所有向量片段
+            self.vectorstore._collection.delete(where={"source": file_path})
+            # 删除物理文件
+            p = Path(file_path)
+            if p.exists():
+                p.unlink()
+                default_logger.info(f"已删除文件: {file_path}")
+            return {"success":True, "message":"文档删除成功"}
+        except Exception as e:
+            default_logger.error(f"删除文档失败: {e}")
+            return {"success":False, "message": f"删除失败: {e}"}
+
+    def list_documents(self)->list:
+        """列出已上传的所有文档"""
+        upload_dir = Path(settings.UPLOAD_FILE_DIR)
+        if not upload_dir.exists():
+            return []
+        docs = []
+        for f in upload_dir.iterdir():
+            if f.is_file():
+                docs.append({
+                    "name": f.name,
+                    "path": str(f),
+                    "size": f.stat().st_size,
+                    "time": f.stat().st_mtime
+                })
+        # 按上传时间倒序
+        docs.sort(key=lambda x: x["time"], reverse=True)
+        return docs
+
+# 全局单例
 rag_service = RagService()

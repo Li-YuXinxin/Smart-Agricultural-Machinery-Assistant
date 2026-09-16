@@ -1,19 +1,65 @@
 import uuid
-from fastapi import APIRouter, File, UploadFile, Depends
+import mimetypes
+from fastapi import APIRouter, File, UploadFile, Depends, Request, Form
 from sqlalchemy.orm import Session
 from pathlib import Path
 from config.config import settings
 from fastapi import HTTPException
+from fastapi.responses import FileResponse
 from utils.common_utils import default_logger
 from services.rag_service import rag_service
 
-router = APIRouter(prefix="/api/knowledge") 
+router = APIRouter(prefix="/api/knowledge")
+
+@router.get("/list")
+async def list_documents():
+    docs = rag_service.list_documents()
+    # 去掉文件名中的UUID前缀（32位hex + 下划线）
+    for doc in docs:
+        name = doc["name"]
+        # UUID格式：32个hex字符 + 下划线
+        if len(name) > 33 and name[32] == '_':
+            hex_part = name[:32]
+            try:
+                int(hex_part, 16)
+                doc["displayName"] = name[33:]
+            except ValueError:
+                doc["displayName"] = name
+        else:
+            doc["displayName"] = name
+    return {"documents": docs}
+
+@router.get("/download")
+async def download_document(name: str):
+    upload_dir = Path(settings.UPLOAD_FILE_DIR)
+    file_path = upload_dir / name
+    try:
+        file_path.resolve().relative_to(upload_dir.resolve())
+    except ValueError:
+        raise HTTPException(status_code=403, detail="禁止访问")
+    if not file_path.exists() or not file_path.is_file():
+        raise HTTPException(status_code=404, detail="文件不存在")
+    media_type = mimetypes.guess_type(str(file_path))[0] or "application/octet-stream"
+    return FileResponse(str(file_path), media_type=media_type, filename=file_path.name)
+
+@router.post("/delete")
+async def delete_document(request: Request):
+    body = await request.json()
+    file_path = body.get("path")
+    if not file_path:
+        raise HTTPException(status_code=400, detail="缺少文件路径")
+    result = rag_service.delete_document(file_path)
+    if not result["success"]:
+        raise HTTPException(status_code=500, detail=result["message"])
+    return result
 
 @router.post("/upload")
 async def upload_document(
-    file: UploadFile = File(...)
+    file: UploadFile = File(...),
+    originalName: str = Form(default="")
 ):
-    file_name = file.filename
+    # 优先使用前端传来的原始文件名，解决手机端临时路径问题
+    file_name = originalName if originalName else file.filename
     # 如果没有则"",反之".xxx"
     ext = Path(file_name).suffix.lower()
     if ext not in settings.ALLOWED_EXTENSIONS:

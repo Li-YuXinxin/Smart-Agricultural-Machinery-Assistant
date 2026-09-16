@@ -4,4 +4,25 @@
   <view wx:if="{{result}}">
     <text>{{result.message}}</text>
   </view>
+
+  <!-- 已上传文档列表 -->
+  <view class="doc-section" wx:if="{{documents.length > 0}}">
+    <text class="doc-section-title">已上传文档（{{documents.length}}）</text>
+    <view class="doc-list">
+      <view class="doc-item" wx:for="{{documents}}" wx:key="path">
+        <view class="doc-info">
+          <text class="doc-name">{{item.displayName}}</text>
+          <text class="doc-meta">{{item.sizeText}}</text>
+        </view>
+        <view class="doc-actions">
+          <text class="doc-preview" catchtap="previewDoc" data-doc="{{item}}">预览</text>
+          <text class="doc-delete" catchtap="deleteDoc" data-doc="{{item}}">删除</text>
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <view wx:if="{{documents.length === 0}}" class="doc-empty">
+    <text>暂无已上传文档</text>
+  </view>
 </view>
