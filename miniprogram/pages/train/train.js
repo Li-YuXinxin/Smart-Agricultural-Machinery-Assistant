@@ -157,6 +157,11 @@ Page({
                 this.stopPolling()
                 if (s === 'done' || s === 'failed') {
                   wx.vibrateShort({ type: 'heavy' })
+                  // 延迟 5 秒后自动重置为"等待训练"状态
+                  this._resetTimer = setTimeout(() => {
+                    this._resetTimer = null
+                    this.setData({ status: { status: 'idle', result: null } })
+                  }, 5000)
                 }
               }
             }
@@ -169,6 +174,10 @@ Page({
       if (this._pollTimer) {
         clearInterval(this._pollTimer)
         this._pollTimer = null
+      }
+      if (this._resetTimer) {
+        clearTimeout(this._resetTimer)
+        this._resetTimer = null
       }
     },
 

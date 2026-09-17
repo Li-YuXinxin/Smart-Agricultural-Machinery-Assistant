@@ -458,11 +458,8 @@
 .history-list {
   background: #FFFFFF;
   border-radius: 20rpx;
-  overflow-y: auto;
-  overflow-x: hidden;
-  -webkit-overflow-scrolling: touch;
+  overflow: hidden;
   box-shadow: 0 2rpx 16rpx rgba(30,43,30,0.06);
-  max-height: 600rpx;
 }
 
 .history-item {

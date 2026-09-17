@@ -38,13 +38,14 @@
         bindtap="navigateTo"
         data-url="{{item.url}}"
         class="feature-card"
-        hover-class="feature-card-hover"
       >
-        <view class="feature-icon-bg" style="background: {{item.gradient}}">
-          <text class="feature-icon">{{item.icon}}</text>
-        </view>
-        <view class="feature-text">
-          <text class="feature-title">{{item.title}}</text>
+        <view class="feature-card-inner" hover-class="feature-card-hover">
+          <view class="feature-icon-bg" style="background: {{item.gradient}}">
+            <text class="feature-icon">{{item.icon}}</text>
+          </view>
+          <view class="feature-text">
+            <text class="feature-title">{{item.title}}</text>
+          </view>
         </view>
       </view>
     </view>
