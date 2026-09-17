@@ -34,6 +34,8 @@ class TrainService:
         self._main_loop: Optional[asyncio.AbstractEventLoop] = None
         self._epochs = settings.FULL_EPOCHS
         self.data_dir = Path(settings.UPLOAD_DATASET_UNZIPED_DIR)   # 默认训练目录
+        self.current_epoch = 0   # 当前训练轮次
+        self.total_epochs = 0    # 总训练轮次
 
     '''保存主事件循环引用，用于跨线程调用异步方法'''
     def set_main_loop(self, main_loop: asyncio.AbstractEventLoop):
@@ -56,7 +58,9 @@ class TrainService:
         # 返回值是字典,前端转换为json字符串
         return {
             "status": self.status,
-            "result": self.result
+            "result": self.result,
+            "current_epoch": self.current_epoch,
+            "total_epochs": self.total_epochs
         }
         
     '''初始化训练参数，启动后台训练线程'''
@@ -70,6 +74,8 @@ class TrainService:
         # default_logger.info(f"状态已设置为: {self.status}")
         self.result = None
         self.stop_requested = False
+        self.current_epoch = 0
+        self.total_epochs = epochs or settings.FULL_EPOCHS
         # 处理用户传入的参数
         if epochs is None:
             self._epochs = settings.FULL_EPOCHS
@@ -102,7 +108,12 @@ class TrainService:
     '''在后台线程中执行实际的模型训练，处理各种状态和异常'''
     def _run(self):
         try:
-            success=classify_service.finetune(data_dir=self._data_dir, epoch=self._epochs, stop_check=lambda e: self.stop_requested)
+            def _on_epoch(current, total):
+                self.current_epoch = current
+                self.total_epochs = total
+                self._broadcast()
+
+            success=classify_service.finetune(data_dir=self._data_dir, epoch=self._epochs, stop_check=lambda e: self.stop_requested, epoch_callback=_on_epoch)
             if self.stop_requested:
                 # 用户中途结束训练
                 self.status = settings.TRAIN_STATUS_FAILED

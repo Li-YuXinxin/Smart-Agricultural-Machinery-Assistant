@@ -21,12 +21,56 @@ Page({
         url:''
       },     // 当前待识别的图片信息
       error: null, // 用来向页面传递错误信息
-      history: []   // 识别历史
+      history: [],   // 识别历史
+      showResult: false,   // 是否显示识别结果弹窗
+      showDetail: false,   // 是否显示历史详情弹窗
+      selectedItem: null,  // 当前选中的历史项
+      animClass: ''    // 入场动画类名
     },
 
     onLoad() {
       this.loadHistory()
+      // 页面入场动画
+      setTimeout(() => this.setData({ animClass: 'page-enter' }), 50)
     },
+
+    onShow() {
+      // 每次显示页面时重置入场动画
+      this.setData({ animClass: '' })
+      setTimeout(() => this.setData({ animClass: 'page-enter' }), 50)
+    },
+
+    /**
+     * 显示历史详情弹窗
+     */
+    showDetailModal(e) {
+      const item = e.currentTarget.dataset.item
+      if (!item) return
+      this.setData({
+        selectedItem: item,
+        showDetail: true
+      })
+    },
+
+    /**
+     * 隐藏识别结果弹窗
+     */
+    hideResult() {
+      this.setData({ showResult: false })
+    },
+
+    /**
+     * 隐藏详情弹窗
+     */
+    hideDetail() {
+      this.setData({ showDetail: false })
+      setTimeout(() => this.setData({ selectedItem: null }), 300)
+    },
+
+    /**
+     * 阻止冒泡（点击弹窗内容区不关闭）
+     */
+    preventBubble() {},
 
     loadHistory() {
       const history = wx.getStorageSync('classifyHistory') || []
@@ -165,13 +209,14 @@ Page({
                   confidenceText: isNaN(conf) ? '' : (conf * 100).toFixed(1) + '%',
                   top5: top5
                 }
-                this.setData({ result: finalResult })
-                // 保存识别历史
+                this.setData({ result: finalResult, showResult: true })
+                // 保存识别历史（含 top5 候选）
                 this.saveHistory({
                   name: raw.top1,
                   confidence: finalResult.confidenceText,
                   time: new Date().toLocaleString(),
-                  imagePath: imagePath
+                  imagePath: imagePath,
+                  top5: finalResult.top5 || []
                 })
               }
             },

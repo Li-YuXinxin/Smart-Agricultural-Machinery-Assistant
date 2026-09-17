@@ -1,13 +1,58 @@
 <!--home/home.wxml-->
-<view class="container">
-  <view>
-    <text>智能植物养护助手</text>
-    <text class="stats-hint" wx:if="{{modelCount > 0}}">已支持识别 {{modelCount}} 种{{isFinetuned ? '植物' : '物品'}}</text>
-  </view>
-  <view>
-    <view wx:for="{{features}}" wx:key="title" bindtap="navigateTo" data-url="{{item.url}}" class="feature-card">
-      <text class="feature-title">{{item.title}}</text>
-      <text class="feature-desc">{{item.desc}}</text>
+<view class="home-page">
+  <scroll-view scroll-y="true" enhanced="true" show-scrollbar="false" class="home-scroll">
+  <!-- 顶部渐变横幅 -->
+  <view class="hero-banner">
+    <view class="hero-deco hero-deco-1"></view>
+    <view class="hero-deco hero-deco-2"></view>
+    <view class="hero-deco hero-deco-3"></view>
+    <view class="hero-content">
+      <text class="hero-emoji">🌿</text>
+      <text class="hero-title">智能植物养护助手</text>
+      <view class="hero-stats" wx:if="{{modelCount > 0}}">
+        <view class="stat-pill">
+          <text class="stat-number">{{modelCount}}</text>
+          <text class="stat-label">种{{isFinetuned ? '植物' : '物品'}}可识别</text>
+        </view>
+      </view>
     </view>
   </view>
+
+  <!-- 可识别品种 -->
+  <view class="species-section page-padding" wx:if="{{classNames.length > 0}}">
+    <text class="section-label">🌱 可识别品种</text>
+    <view class="species-tags">
+      <view class="species-tag" wx:for="{{classNames}}" wx:key="*this" style="animation-delay: {{index * 50}}ms">
+        <text>{{item}}</text>
+      </view>
+    </view>
+  </view>
+
+  <!-- 功能入口 -->
+  <view class="features-section">
+    <text class="section-label">快捷功能</text>
+    <view class="feature-grid">
+      <view
+        wx:for="{{features}}"
+        wx:key="title"
+        bindtap="navigateTo"
+        data-url="{{item.url}}"
+        class="feature-card"
+        hover-class="feature-card-hover"
+      >
+        <view class="feature-icon-bg" style="background: {{item.gradient}}">
+          <text class="feature-icon">{{item.icon}}</text>
+        </view>
+        <view class="feature-text">
+          <text class="feature-title">{{item.title}}</text>
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <!-- 底部装饰 -->
+  <view class="footer-deco">
+    <text class="footer-text">🌱 用心呵护每一株植物</text>
+  </view>
+  </scroll-view>
 </view>

@@ -400,7 +400,7 @@ class ClassifyService:
         6. 加载模型（微调或预训练）
         7. 调整 fc 层
     '''
-    def finetune(self, data_dir: Path, epoch = 20, stop_check=None):
+    def finetune(self, data_dir: Path, epoch = 20, stop_check=None, epoch_callback=None):
         default_logger.info(f"开始微调模型,支持{epoch}个epoch")
         try:
             # 定义微调参数
@@ -635,6 +635,13 @@ class ClassifyService:
             scheduler.step()
             # 获得当前的学习率
             current_lr = optimizer.param_groups[0]['lr']
+
+            # 回调通知当前轮次
+            if epoch_callback:
+                try:
+                    epoch_callback(e, epoch)
+                except Exception as cb_err:
+                    default_logger.warning(f"epoch回调失败: {cb_err}")
             
             if val_acc >= best_acc:
                 # 保存模型

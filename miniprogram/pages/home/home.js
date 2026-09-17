@@ -10,13 +10,14 @@ Page({
      */
   data: {
     features: [
-      { title: '拍照识花', desc: '拍照识别植物品种', url: '/pages/classify/classify' },
-      { title: '添加新品种', desc: '训练扩展可识别品种', url: '/pages/train/train' },
-      { title: '养护笔记', desc: '上传养护文档构建知识库', url: '/pages/knowledge/knowledge' },
-      { title: '养护顾问', desc: 'AI 问答解答养护问题', url: '/pages/chat/chat' }
+      { title: '拍照识花', desc: '拍照或从相册选取，智能识别植物品种', url: '/pages/classify/classify', icon: '📷', gradient: 'linear-gradient(135deg, #E8F5E9, #C8E6C9)' },
+      { title: '训练新品种', desc: '上传图片训练模型，扩展可识别范围', url: '/pages/train/train', icon: '🧠', gradient: 'linear-gradient(135deg, #E0F2F1, #B2DFDB)' },
+      { title: '养护笔记', desc: '上传养护文档，构建专属知识库', url: '/pages/knowledge/knowledge', icon: '📖', gradient: 'linear-gradient(135deg, #FFF8E1, #FFECB3)' },
+      { title: '养护顾问', desc: 'AI 智能问答，解答各类养护难题', url: '/pages/chat/chat', icon: '💬', gradient: 'linear-gradient(135deg, #E3F2FD, #BBDEFB)' }
     ],
     modelCount: 0,
-    isFinetuned: false
+    isFinetuned: false,
+    classNames: []   // 可识别的品种名称列表
   },
 
   onShow() {
@@ -31,7 +32,8 @@ Page({
         if (res.statusCode === 200) {
           this.setData({
             modelCount: res.data.count || 0,
-            isFinetuned: res.data.is_finetuned || false
+            isFinetuned: res.data.is_finetuned || false,
+            classNames: res.data.class_names || []
           })
         }
       }

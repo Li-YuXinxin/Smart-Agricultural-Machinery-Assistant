@@ -1,46 +1,173 @@
 <!--pages/classify/classify.wxml-->
-<navigation-bar title="拍照识花" back="{{false}}" color="black" background="#F5F5F5"></navigation-bar>
-<view class="container">
-  <view>
-    <button bindtap="takePhoto" disabled="{{isProcessing}}">拍照/选图识别</button>
-    <view wx:if="{{result}}">
-      <image src="{{result.imagePath}}" mode="aspectFill" />
-      <!--结果列表-->
-      <view>
-        <view>
-          <text>品种：{{result.top1}}</text>
-          <text wx:if="{{result.confidenceText}}">  置信度：{{result.confidenceText}}</text>
-        </view>
-        <!-- 未知类型引导 -->
-        <view wx:if="{{result.top1 === '未知类型'}}" class="unknown-hint">
-          <text>无法识别该品种，试试</text>
-          <text class="unknown-link" bindtap="navigateToTrain">训练新品种</text>
-        </view>
-        <!-- Top-5 候选 -->
-        <view wx:if="{{result.top5 && result.top5.length > 1}}">
-          <text>其他可能：</text>
-          <view wx:for="{{result.top5}}" wx:key="class" wx:if="{{index > 0}}">
-            <text>{{item.class}}（{{item.confidenceText}}）</text>
-          </view>
+<view class="classify-page {{animClass}}">
+  <!-- 顶部渐变标题栏 -->
+  <view class="classify-header">
+    <view class="header-deco-1"></view>
+    <view class="header-deco-2"></view>
+    <text class="header-title">拍照识花</text>
+    <text class="header-sub">对准植物，一键识别品种</text>
+  </view>
+
+  <scroll-view class="classify-body" scroll-y="true" enhanced="true" show-scrollbar="false">
+    <!-- 拍照按钮 -->
+    <view class="camera-section" bindtap="takePhoto" hover-class="camera-hover">
+      <view class="camera-ring">
+        <view class="camera-inner">
+          <text class="camera-icon">📷</text>
         </view>
       </view>
+      <text class="camera-text">{{isProcessing ? '正在识别中...' : '点击拍照或选择图片'}}</text>
+      <text class="camera-hint">支持相册选图和实时拍摄</text>
     </view>
 
     <!-- 识别历史 -->
     <view class="history-section" wx:if="{{history.length > 0}}">
       <view class="history-header">
-        <text class="history-title">识别历史</text>
+        <text class="history-title">📋 识别历史</text>
         <text class="history-clear" bindtap="clearHistory">清空</text>
       </view>
-      <view class="history-list">
-        <view class="history-item" wx:for="{{history}}" wx:key="time">
+      <scroll-view class="history-list" scroll-y="true" enhanced="true" show-scrollbar="true">
+        <view class="history-item history-item-anim" wx:for="{{history}}" wx:key="time" hover-class="history-item-hover" bindtap="showDetailModal" data-item="{{item}}" style="animation-delay: {{index * 60}}ms">
           <image wx:if="{{item.imagePath}}" class="history-thumb" src="{{item.imagePath}}" mode="aspectFill"></image>
           <view class="history-info">
             <text class="history-name">{{item.name}}</text>
-            <text class="history-meta">{{item.confidence}} · {{item.time}}</text>
+            <view class="history-meta-row">
+              <text class="history-confidence">{{item.confidence}}</text>
+              <text class="history-dot">·</text>
+              <text class="history-time">{{item.time}}</text>
+            </view>
+          </view>
+          <text class="history-arrow">›</text>
+        </view>
+      </scroll-view>
+    </view>
+  </scroll-view>
+
+  <!-- 识别结果弹窗（从顶部滑下） -->
+  <view class="result-mask {{showResult ? 'result-mask-show' : ''}}" bindtap="hideResult">
+    <view class="result-modal {{showResult ? 'result-modal-show' : ''}}" catchtap="preventBubble">
+      <!-- 绿色渐变头部 -->
+      <view class="result-header">
+        <view class="result-header-deco"></view>
+        <view class="result-header-info" wx:if="{{result}}">
+          <text class="result-plant-name">{{result.top1}}</text>
+          <view class="result-conf-pill" wx:if="{{result.confidenceText}}">
+            <text class="result-conf-val">{{result.confidenceText}}</text>
           </view>
         </view>
+        <view class="result-close" bindtap="hideResult">
+          <text class="result-close-icon">×</text>
+        </view>
       </view>
+
+      <!-- 可滚动内容区 -->
+      <scroll-view scroll-y="true" class="result-scroll" enhanced="true" show-scrollbar="false">
+        <block wx:if="{{result}}">
+          <!-- 图片 -->
+          <view class="result-img-wrap">
+            <image class="result-image" src="{{result.imagePath}}" mode="aspectFill" />
+          </view>
+
+          <!-- 结果信息 -->
+          <view class="result-body">
+            <!-- 置信度进度条 -->
+            <view class="confidence-bar-wrap" wx:if="{{result.confidenceText}}">
+              <view class="confidence-label-row">
+                <text class="confidence-label">置信度</text>
+                <text class="confidence-val">{{result.confidenceText}}</text>
+              </view>
+              <view class="confidence-track">
+                <view class="confidence-fill" style="width: {{result.confidenceText}}"></view>
+              </view>
+            </view>
+
+            <!-- 未知类型引导 -->
+            <view wx:if="{{result.top1 === '未知类型'}}" class="unknown-banner" bindtap="navigateToTrain">
+              <text class="unknown-icon">🤔</text>
+              <view class="unknown-text">
+                <text class="unknown-title">无法识别该品种</text>
+                <text class="unknown-sub">点击前往训练新品种 →</text>
+              </view>
+            </view>
+
+            <!-- Top-5 候选 -->
+            <view class="top5-section" wx:if="{{result.top5 && result.top5.length > 1}}">
+              <text class="top5-heading">其他可能的品种</text>
+              <view class="top5-list">
+                <view class="top5-item" wx:for="{{result.top5}}" wx:key="class" wx:if="{{index > 0}}">
+                  <view class="top5-rank">{{index + 1}}</view>
+                  <text class="top5-name">{{item.class}}</text>
+                  <text class="top5-conf">{{item.confidenceText}}</text>
+                </view>
+              </view>
+            </view>
+          </view>
+        </block>
+      </scroll-view>
+    </view>
+  </view>
+
+  <!-- 历史详情弹窗（从底部滑上） -->
+  <view class="detail-mask {{showDetail ? 'mask-show' : ''}}" bindtap="hideDetail">
+    <view class="detail-modal {{showDetail ? 'modal-show' : ''}}" catchtap="preventBubble">
+      <!-- 关闭按钮 -->
+      <view class="modal-close" bindtap="hideDetail">
+        <text class="close-icon">×</text>
+      </view>
+
+      <block wx:if="{{selectedItem}}">
+        <!-- 大图 -->
+        <view class="modal-img-wrap">
+          <image class="modal-img" src="{{selectedItem.imagePath}}" mode="aspectFill" />
+          <view class="modal-img-overlay">
+            <text class="modal-plant-name">{{selectedItem.name}}</text>
+          </view>
+        </view>
+
+        <!-- 详情信息 -->
+        <view class="modal-body">
+          <!-- 置信度 -->
+          <view class="modal-info-row">
+            <view class="info-icon-bg">
+              <text class="info-icon">📊</text>
+            </view>
+            <view class="info-content">
+              <text class="info-label">置信度</text>
+              <text class="info-value confidence-highlight">{{selectedItem.confidence || '未知'}}</text>
+            </view>
+          </view>
+
+          <!-- 识别时间 -->
+          <view class="modal-info-row">
+            <view class="info-icon-bg">
+              <text class="info-icon">🕐</text>
+            </view>
+            <view class="info-content">
+              <text class="info-label">识别时间</text>
+              <text class="info-value">{{selectedItem.time}}</text>
+            </view>
+          </view>
+
+          <!-- Top-5 候选（如有） -->
+          <view class="modal-top5" wx:if="{{selectedItem.top5 && selectedItem.top5.length > 0}}">
+            <text class="modal-section-title">候选品种</text>
+            <view class="modal-top5-list">
+              <view class="modal-top5-item" wx:for="{{selectedItem.top5}}" wx:key="class">
+                <view class="modal-top5-rank {{index === 0 ? 'rank-first' : ''}}">{{index + 1}}</view>
+                <text class="modal-top5-name">{{item.class}}</text>
+                <text class="modal-top5-conf">{{item.confidenceText}}</text>
+              </view>
+            </view>
+          </view>
+
+          <!-- 操作按钮 -->
+          <view class="modal-actions">
+            <view class="modal-btn modal-btn-primary" bindtap="hideDetail">
+              <text>我知道了</text>
+            </view>
+          </view>
+        </view>
+      </block>
     </view>
   </view>
 </view>

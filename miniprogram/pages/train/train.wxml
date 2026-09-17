@@ -1,15 +1,35 @@
 <!--pages/train/train.wxml-->
-<view class="container">
-  <view>
-    <!-- 文件上传按钮 -->
-    <view>
-      <button bindtap="chooseImages">选择植物图片</button>
-      <button bindtap="clearImages">清除图片</button>
+<view class="train-page">
+  <scroll-view scroll-y="true" enhanced="true" show-scrollbar="false" class="train-scroll">
+  <!-- 顶部渐变标题栏 -->
+  <view class="train-header">
+    <view class="header-deco"></view>
+    <text class="header-title">🧠 训练新品种</text>
+    <text class="header-sub">上传图片，扩展植物识别能力</text>
+  </view>
+
+  <view class="train-body page-padding">
+    <!-- 文件上传区域 -->
+    <view class="upload-row">
+      <view class="upload-btn" bindtap="chooseImages" hover-class="upload-btn-hover">
+        <view class="upload-btn-icon-bg">
+          <text class="upload-btn-icon">📷</text>
+        </view>
+        <text class="upload-btn-text">选择植物图片</text>
+      </view>
+      <view class="clear-btn" bindtap="clearImages" hover-class="clear-btn-hover" wx:if="{{imageList.length > 0}}">
+        <text class="clear-btn-text">🗑️ 清除</text>
+      </view>
     </view>
 
     <!-- 文件列表 -->
     <view class="image-section" wx:if="{{imageList.length > 0}}">
-      <view class="image-count">已选 {{imageList.length}}/9 张图片</view>
+      <view class="image-count-row">
+        <text class="image-count">已选图片</text>
+        <view class="count-pill">
+          <text class="count-num">{{imageList.length}}/9</text>
+        </view>
+      </view>
       <view class="image-grid">
         <view class="grid-item" wx:for="{{imageList}}" wx:key="path">
           <image class="thumb" src="{{item.path}}" mode="aspectFill"></image>
@@ -17,46 +37,78 @@
         </view>
       </view>
     </view>
-    <view class="empty-hint" wx:else>
-      <text>暂未添加任何图片</text>
+    <view class="empty-state" wx:else>
+      <view class="empty-icon-bg">
+        <text class="empty-emoji">🌱</text>
+      </view>
+      <text class="empty-title">暂未添加任何图片</text>
+      <text class="empty-desc">选择 3~9 张同种植物照片开始训练</text>
     </view>
 
     <!-- 分类名称 -->
-    <view>
-      <text>分类名称：</text>
-      <input placeholder="请输入分类名称" value="{{label}}" bindinput="onLabelInput" />
+    <view class="input-card">
+      <text class="input-label">分类名称</text>
+      <input class="train-input" placeholder="请输入分类名称，如：绿萝、多肉" value="{{label}}" bindinput="onLabelInput" />
     </view>
 
-    <!--  是否重新训练 -->
-    <view class="checkbox-row">
+    <!-- 是否重新训练 -->
+    <view class="option-card">
       <checkbox-group bindchange="onClearOldChange">
-        <label>
-          <checkbox value="clearOld" checked="{{clearOld}}" />
-          <text>重新训练</text>
+        <label class="checkbox-label">
+          <checkbox value="clearOld" checked="{{clearOld}}" color="#2D7A4F" />
+          <view class="checkbox-text-area">
+            <text class="checkbox-main">重新训练</text>
+            <text class="checkbox-sub">覆盖已有模型数据</text>
+          </view>
         </label>
       </checkbox-group>
     </view>
 
     <!-- 操作按钮 -->
-    <view>
-      <button bindtap="startFull" disabled="{{!canStart || isTraining}}">开始训练</button>
+    <view class="action-section">
+      <view class="primary-btn {{!canStart || isTraining ? 'btn-disabled' : ''}}" bindtap="startFull" hover-class="btn-hover">
+        <text class="btn-text">{{isTraining ? '⏳ 训练中...' : '🚀 开始训练'}}</text>
+      </view>
     </view>
 
-    <!-- 微调状态 -->
-    <view wx:if="{{status.status != 'idle'}}">
-      <view>
-        <text>训练状态:{{status.status}}</text>
-        <button wx:if="{{status.status == 'running'}}" type="warn" size="mini" bindtap="stopTraining">停止训练</button>
+    <!-- 训练状态 -->
+    <view class="status-card" wx:if="{{status.status != 'idle'}}">
+      <view class="status-header">
+        <view class="status-indicator status-{{status.status}}"></view>
+        <text class="status-title">训练进度</text>
+        <view wx:if="{{status.status == 'running'}}" class="stop-btn" bindtap="stopTraining">
+          <text class="stop-btn-text">停止训练</text>
+        </view>
       </view>
-      <view wx:if="{{status.status==='done'}}">
-        <text>训练成功</text>
+      <view class="status-body">
+        <view class="status-row">
+          <text class="status-label">当前状态</text>
+          <text class="status-val status-val-{{status.status}}">{{status.status === 'running' ? '训练中' : status.status === 'done' ? '已完成' : '失败'}}</text>
+        </view>
+        <!-- 当前轮次 -->
+        <view class="epoch-section" wx:if="{{status.total_epochs > 0}}">
+          <view class="epoch-row">
+            <text class="epoch-label">训练轮次</text>
+            <text class="epoch-val">{{status.current_epoch}} / {{status.total_epochs}}</text>
+          </view>
+          <view class="epoch-track">
+            <view class="epoch-fill" style="width: {{status.current_epoch / status.total_epochs * 100}}%"></view>
+          </view>
+        </view>
       </view>
-      <view wx:if="{{status.status==='failed'}}">
-        <text>训练失败:{{status.result?status.result.error:'未知错误'}}</text>
+      <view wx:if="{{status.status==='done'}}" class="status-banner status-banner-success">
+        <text>✅ 训练成功！新品种已可识别</text>
+      </view>
+      <view wx:if="{{status.status==='failed'}}" class="status-banner status-banner-error">
+        <text>❌ 训练失败: {{status.result ? status.result.error : '未知错误'}}</text>
       </view>
     </view>
-    <view wx:else>
-      <text>等待训练开始...</text>
+    <view class="status-card status-card-waiting" wx:else>
+      <view class="waiting-content">
+        <text class="waiting-icon">⏳</text>
+        <text class="waiting-text">等待训练开始...</text>
+      </view>
     </view>
   </view>
+  </scroll-view>
 </view>

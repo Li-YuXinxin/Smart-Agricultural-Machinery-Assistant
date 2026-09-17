@@ -10,7 +10,7 @@
         "navigationBarTextStyle": "black",
         "navigationStyle": "custom",
         "navigationBarTitleText": "智慧农技助手",
-        "navigationBarBackgroundColor": "#f5f5f5"
+        "navigationBarBackgroundColor": "#F4F9F0"
     },
     "style": "v2",
     "renderer": "skyline",
@@ -28,9 +28,9 @@
     "sitemapLocation": "sitemap.json",
     "lazyCodeLoading": "requiredComponents",
     "tabBar": {
-      "color": "#999999",
-      "selectedColor": "#07c160",
-      "backgroundColor": "#ffffff",
+      "color": "#5A6B5A",
+      "selectedColor": "#2D7A4F",
+      "backgroundColor": "#FFFFFF",
       "borderStyle": "black",
       "list": [
         {

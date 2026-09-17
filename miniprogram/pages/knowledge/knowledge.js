@@ -36,12 +36,12 @@ Page({
     getTypeTag(name) {
       const ext = (name || '').split('.').pop().toLowerCase()
       const map = {
-        pdf: { text: 'PDF', color: '#e74c3c' },
-        doc: { text: 'DOC', color: '#2980b9' },
-        docx: { text: 'DOCX', color: '#2980b9' },
-        txt: { text: 'TXT', color: '#27ae60' }
+        pdf:  { text: 'PDF',  icon: '📕', bgColor: 'rgba(229,57,53,0.1)',  badgeBg: 'rgba(229,57,53,0.12)', badgeColor: '#C62828' },
+        doc:  { text: 'DOC',  icon: '📘', bgColor: 'rgba(41,128,185,0.1)', badgeBg: 'rgba(41,128,185,0.12)', badgeColor: '#1565C0' },
+        docx: { text: 'DOCX', icon: '📘', bgColor: 'rgba(41,128,185,0.1)', badgeBg: 'rgba(41,128,185,0.12)', badgeColor: '#1565C0' },
+        txt:  { text: 'TXT',  icon: '📗', bgColor: 'rgba(39,174,96,0.1)',  badgeBg: 'rgba(39,174,96,0.12)',  badgeColor: '#2E7D32' }
       }
-      return map[ext] || { text: ext.toUpperCase(), color: '#999' }
+      return map[ext] || { text: ext.toUpperCase(), icon: '📄', bgColor: 'rgba(153,153,153,0.1)', badgeBg: 'rgba(153,153,153,0.12)', badgeColor: '#666' }
     },
 
     /**

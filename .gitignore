@@ -19,33 +19,18 @@ lib/
 lib64/
 MANIFEST
 
+# ============================
 # 虚拟环境
+# ============================
 .venv/
-.venv-1/
-venv/
-env/
-ENV/
-env.bak/
-venv.bak/
 
 # ============================
 # IDE / 编辑器
 # ============================
 .vscode/
 .idea/
-*.swp
-*.swo
-*~
-.DS_Store
-Thumbs.db
+.claude/
 
-# ============================
-# 日志与运行时文件
-# ============================
-*.log
-logs/
-!logs/.gitkeep
-backend/data/logs/*.log
 
 # ============================
 # 环境变量与密钥
@@ -60,15 +45,7 @@ backend/data/logs/*.log
 # 模型文件（体积过大，请勿提交到仓库）
 # ============================
 backend/data/models/
-*.gguf
-*.safetensors
-*.pth
-*.pt
-*.onnx
-*.bin
-*.h5
-*.msgpack
-*.ot
+
 
 # ============================
 # 数据集与压缩包

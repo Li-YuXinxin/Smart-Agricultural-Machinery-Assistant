@@ -12,7 +12,11 @@ async def classify_stats():
     is_finetuned = classify_service.model_ready and any(
         not name.startswith("class_") for name in (classify_service.class_names or [])
     )
-    return {"count": count, "is_finetuned": is_finetuned}
+    # 返回可识别的品种名称列表（过滤掉 class_ 开头的占位符）
+    class_names = []
+    if is_finetuned and classify_service.class_names:
+        class_names = [n for n in classify_service.class_names if not n.startswith("class_")]
+    return {"count": count, "is_finetuned": is_finetuned, "class_names": class_names}
 
 def decode_base64_image(base64_str: str) -> bytes:
     if base64_str.startswith("data:image"):

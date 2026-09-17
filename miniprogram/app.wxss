@@ -1,4 +1,18 @@
 /**app.wxss**/
+
+/* 导入设计系统 */
+@import './styles/utilities.wxss';
+
+/* 全局基础样式 */
+page {
+  font-family: 'PingFang SC', sans-serif;
+  font-size: 28rpx;
+  color: #1E2B1E;
+  background: #F4F9F0;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
+
 .container {
   height: 100%;
   display: flex;
@@ -7,4 +21,17 @@
   justify-content: space-between;
   padding: 200rpx 0;
   box-sizing: border-box;
-} 
+}
+
+/* 全局图片防溢出 */
+image {
+  max-width: 100%;
+  display: block;
+}
+
+/* 全局过渡动画 */
+view, text, image {
+  transition-property: color, background-color, opacity, transform;
+  transition-duration: 150ms;
+  transition-timing-function: cubic-bezier(0.4,0,0.2,1);
+}
