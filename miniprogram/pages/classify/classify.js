@@ -60,6 +60,30 @@ Page({
     },
 
     /**
+     * 结果弹窗图片加载失败时，清空 imagePath 显示占位符
+     */
+    onResultImageError() {
+      if (this.data.result) {
+        this.setData({ 'result.imagePath': '' })
+      }
+    },
+
+    /**
+     * 详情弹窗图片加载失败时，尝试用缩略图，都没有则显示占位
+     */
+    onDetailImageError() {
+      const item = this.data.selectedItem
+      if (!item) return
+      // 如果当前用的是 imagePath 且有 thumbPath，降级到缩略图
+      if (item.imagePath && item.thumbPath) {
+        this.setData({ 'selectedItem.imagePath': '' })
+      } else {
+        // 两者都失效，清空让 wx:else 占位生效
+        this.setData({ 'selectedItem.imagePath': '', 'selectedItem.thumbPath': '' })
+      }
+    },
+
+    /**
      * 隐藏详情弹窗
      */
     hideDetail() {
@@ -80,9 +104,45 @@ Page({
     saveHistory(item) {
       let history = wx.getStorageSync('classifyHistory') || []
       history.unshift(item)
-      if (history.length > 20) history = history.slice(0, 20)
-      wx.setStorageSync('classifyHistory', history)
+      if (history.length > 20) {
+        // 清理超出条目的缩略图文件，防止 USER_DATA_PATH 堆积
+        const removed = history.splice(20)
+        removed.forEach(h => {
+          if (h.thumbPath && h.thumbPath !== h.imagePath) {
+            try { fs.unlink({ filePath: h.thumbPath }) } catch(e) {}
+          }
+        })
+      }
+      try {
+        wx.setStorageSync('classifyHistory', history)
+      } catch (e) {
+        console.error('保存识别历史失败:', e)
+      }
       this.setData({ history })
+    },
+
+    /**
+     * 为历史记录生成压缩缩略图并保存到 USER_DATA_PATH
+     * @param {string} srcPath - 原始图片路径
+     * @param {function} callback - 回调(thumbPath)
+     */
+    makeHistoryThumb(srcPath, callback) {
+      wx.compressImage({
+        src: srcPath,
+        quality: 30,
+        success: (res) => {
+          const thumbName = `thumb_${Date.now()}.jpg`
+          const thumbPath = `${USER_DATA_PATH}/${thumbName}`
+          try {
+            fs.copyFileSync(res.tempFilePath, thumbPath)
+            callback(thumbPath)
+          } catch (e) {
+            console.error('保存缩略图失败:', e)
+            callback(srcPath)
+          }
+        },
+        fail: () => callback(srcPath)
+      })
     },
 
     clearHistory() {
@@ -96,6 +156,19 @@ Page({
           }
         }
       })
+    },
+
+    /**
+     * 历史缩略图加载失败时，将 imagePath 和 thumbPath 都清空，显示占位符
+     */
+    onThumbError(e) {
+      const index = e.currentTarget.dataset.index
+      const history = this.data.history
+      if (index >= 0 && index < history.length) {
+        history[index].imagePath = ''
+        history[index].thumbPath = ''
+        this.setData({ history })
+      }
     },
 
     navigateToTrain() {
@@ -210,13 +283,16 @@ Page({
                   top5: top5
                 }
                 this.setData({ result: finalResult, showResult: true })
-                // 保存识别历史（含 top5 候选）
-                this.saveHistory({
-                  name: raw.top1,
-                  confidence: finalResult.confidenceText,
-                  time: new Date().toLocaleString(),
-                  imagePath: imagePath,
-                  top5: finalResult.top5 || []
+                // 生成压缩缩略图后保存历史（防止手机端清理临时文件导致图片失效）
+                this.makeHistoryThumb(imagePath, (thumbPath) => {
+                  this.saveHistory({
+                    name: raw.top1,
+                    confidence: finalResult.confidenceText,
+                    time: new Date().toLocaleString(),
+                    imagePath: imagePath,
+                    thumbPath: thumbPath,
+                    top5: finalResult.top5 || []
+                  })
                 })
               }
             },

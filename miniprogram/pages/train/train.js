@@ -23,6 +23,7 @@ Page({
       this._wsClosed = false        // 页面是否已卸载,用于停止自动重连
       this._reconnectTimer = null   // 重连定时器句柄
       this.initWebSocket()  // 初始化 WebSocket
+      this.startPolling()   // 启动 HTTP 轮询兜底
       this.updateCanStart()
     },
 
@@ -70,14 +71,21 @@ Page({
           return
         }
         // 从全局配置中获取 API 基础地址，并去除协议前缀
-        const base = app.globalData.apiBase.replace('http://', '').replace('https://', '')
+        const base = apiBase.replace('http://', '').replace('https://', '')
         // ws 的 api 路径
         const wsUrl = `ws://${base}/api/train/ws`
-        // 创建 WebSocket 连接
+        // 创建 WebSocket 连接，回调在参数中绑定，避免时序问题导致手机端丢失首条消息
         const ws = wx.connectSocket({
-          url: wsUrl
+          url: wsUrl,
+          success: () => {
+            console.log('ws connectSocket 调用成功')
+          },
+          fail: (err) => {
+            console.log('ws connectSocket 调用失败', err)
+          }
         })
 
+        // 绑定回调（使用同一个 ws 对象，保证手机端不会漏掉 onMessage）
         ws.onOpen(()=>{
           console.log('ws 连接成功')
         })
@@ -95,9 +103,7 @@ Page({
               raw = JSON.stringify(raw)
             }
             if (!raw) return
-            const get_data = JSON.parse(res.data) // 解析接收到的 JSON 数据
-            // console.log('ws接收到数据：', get_data)
-            // console.log('当前状态:', get_data.status)
+            const get_data = JSON.parse(raw) // 使用已经处理好的 raw，避免重复解析
             this.setData ({status:get_data})      // 更新页面数据中的训练状态
             console.log('ws接收到数据：', get_data)
             // 训练完成时震动提醒
@@ -133,6 +139,40 @@ Page({
     },
 
     /**
+     * HTTP 轮询兜底：手机端 WebSocket 可能收不到推送，用 HTTP 定时拉取训练状态
+     * 仅在训练进行中(pending/running)时轮询，idle/done/failed 时自动停止
+     */
+    startPolling() {
+      this.stopPolling()
+      this._pollTimer = setInterval(() => {
+        wx.request({
+          url: `${app.globalData.apiBase}/api/train/status`,
+          method: 'GET',
+          success: (res) => {
+            if (res.statusCode === 200 && res.data) {
+              this.setData({ status: res.data })
+              const s = res.data.status
+              // 训练结束或空闲时停止轮询
+              if (s === 'done' || s === 'failed' || s === 'idle') {
+                this.stopPolling()
+                if (s === 'done' || s === 'failed') {
+                  wx.vibrateShort({ type: 'heavy' })
+                }
+              }
+            }
+          }
+        })
+      }, 2000)
+    },
+
+    stopPolling() {
+      if (this._pollTimer) {
+        clearInterval(this._pollTimer)
+        this._pollTimer = null
+      }
+    },
+
+    /**
      * 更新 canStart 的状态, 其结果会决定"开始训练"按钮是否可点击
      * 1. 图片列表不为空（已上传训练图片）
      * 2. 标签名称不为空（已填写训练标签）
@@ -156,6 +196,7 @@ Page({
     onUnload() {
       // 手动关闭并释放WebSocket连接，释放资源
       this._wsClosed = true
+      this.stopPolling()
       if (this._reconnectTimer){
         clearTimeout(this._reconnectTimer)
         this._reconnectTimer = null
@@ -331,6 +372,8 @@ Page({
             // 请求成功，判断状态码
             if (res.statusCode === 200) {
               wx.showToast({ title: '请求训练成功', icon: 'success' })
+              // 启动 HTTP 轮询兜底，防止手机端 WebSocket 收不到推送
+              this.startPolling()
               // 清空数据，为下一次训练做准备
               this.setData({imageList:[],label:'',clearOld:false,isTraining:false},this.updateCanStart)
             } else {

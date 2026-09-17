@@ -26,9 +26,10 @@
         <text class="history-title">📋 识别历史</text>
         <text class="history-clear" bindtap="clearHistory">清空</text>
       </view>
-      <scroll-view class="history-list" scroll-y="true" enhanced="true" show-scrollbar="true">
+      <view class="history-list">
         <view class="history-item history-item-anim" wx:for="{{history}}" wx:key="time" hover-class="history-item-hover" bindtap="showDetailModal" data-item="{{item}}" style="animation-delay: {{index * 60}}ms">
-          <image wx:if="{{item.imagePath}}" class="history-thumb" src="{{item.imagePath}}" mode="aspectFill"></image>
+          <image wx:if="{{item.thumbPath || item.imagePath}}" class="history-thumb" src="{{item.thumbPath || item.imagePath}}" mode="aspectFill" binderror="onThumbError" data-index="{{index}}"></image>
+          <view wx:else class="history-thumb history-thumb-placeholder">📷</view>
           <view class="history-info">
             <text class="history-name">{{item.name}}</text>
             <view class="history-meta-row">
@@ -39,7 +40,7 @@
           </view>
           <text class="history-arrow">›</text>
         </view>
-      </scroll-view>
+      </view>
     </view>
   </scroll-view>
 
@@ -61,11 +62,12 @@
       </view>
 
       <!-- 可滚动内容区 -->
-      <scroll-view scroll-y="true" class="result-scroll" enhanced="true" show-scrollbar="false">
+      <view class="result-scroll">
         <block wx:if="{{result}}">
           <!-- 图片 -->
           <view class="result-img-wrap">
-            <image class="result-image" src="{{result.imagePath}}" mode="aspectFill" />
+            <image wx:if="{{result.imagePath}}" class="result-image" src="{{result.imagePath}}" mode="aspectFill" binderror="onResultImageError" />
+            <view wx:else class="result-img-placeholder">📷</view>
           </view>
 
           <!-- 结果信息 -->
@@ -103,7 +105,7 @@
             </view>
           </view>
         </block>
-      </scroll-view>
+      </view>
     </view>
   </view>
 
@@ -118,7 +120,10 @@
       <block wx:if="{{selectedItem}}">
         <!-- 大图 -->
         <view class="modal-img-wrap">
-          <image class="modal-img" src="{{selectedItem.imagePath}}" mode="aspectFill" />
+          <image wx:if="{{selectedItem.thumbPath || selectedItem.imagePath}}" class="modal-img" src="{{selectedItem.imagePath || selectedItem.thumbPath}}" mode="aspectFill" binderror="onDetailImageError" />
+          <view wx:else class="modal-img modal-img-fallback">
+            <text class="modal-img-icon">📷</text>
+          </view>
           <view class="modal-img-overlay">
             <text class="modal-plant-name">{{selectedItem.name}}</text>
           </view>

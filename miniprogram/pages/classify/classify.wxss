@@ -12,7 +12,7 @@
 /* ========== 顶部渐变标题 ========== */
 .classify-header {
   position: relative;
-  background: linear-gradient(145deg, #D4943A, #E8B06A);
+  background: linear-gradient(145deg, #1B5E3B, #2D7A4F, #4A9E6A);
   padding: 100rpx 40rpx 48rpx;
   border-radius: 0 0 40rpx 40rpx;
   overflow: hidden;
@@ -148,6 +148,16 @@
 .result-image {
   width: 100%;
   height: 100%;
+}
+
+.result-img-placeholder {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 80rpx;
+  background: #EDF5E8;
 }
 
 .result-badge {
@@ -327,6 +337,8 @@
 /* 可滚动内容区 */
 .result-scroll {
   max-height: calc(80vh - 160rpx);
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 /* 未知类型引导 */
@@ -446,7 +458,9 @@
 .history-list {
   background: #FFFFFF;
   border-radius: 20rpx;
-  overflow: hidden;
+  overflow-y: auto;
+  overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
   box-shadow: 0 2rpx 16rpx rgba(30,43,30,0.06);
   max-height: 600rpx;
 }
@@ -476,6 +490,13 @@
   background: #EDF5E8;
   flex-shrink: 0;
   margin-right: 20rpx;
+}
+
+.history-thumb-placeholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 36rpx;
 }
 
 .history-info {
@@ -598,6 +619,17 @@
 .modal-img {
   width: 100%;
   height: 100%;
+}
+
+.modal-img-fallback {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #EDF5E8;
+}
+
+.modal-img-icon {
+  font-size: 80rpx;
 }
 
 .modal-img-overlay {
