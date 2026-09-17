@@ -1,1 +1,7 @@
 /* home/home.wxss */
+.stats-hint {
+  font-size: 24rpx;
+  color: #999;
+  margin-top: 8rpx;
+  display: block;
+}

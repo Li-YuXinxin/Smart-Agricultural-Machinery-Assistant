@@ -16,7 +16,7 @@
       <view class="doc-item" wx:for="{{documents}}" wx:key="path">
         <view class="doc-info">
           <text class="doc-name">{{item.displayName}}</text>
-          <text class="doc-meta">{{item.sizeText}}</text>
+          <text class="doc-meta">{{item.typeTag.text}} · {{item.sizeText}} · {{item.timeText}}</text>
         </view>
         <view class="doc-actions">
           <text class="doc-preview" catchtap="previewDoc" data-doc="{{item}}">预览</text>

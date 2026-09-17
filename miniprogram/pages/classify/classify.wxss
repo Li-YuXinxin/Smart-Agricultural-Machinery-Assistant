@@ -1,1 +1,81 @@
 /* pages/classify/classify.wxss */
+
+.unknown-hint {
+  margin-top: 12rpx;
+  font-size: 24rpx;
+  color: #999;
+}
+
+.unknown-link {
+  color: #576b95;
+  text-decoration: underline;
+  margin-left: 8rpx;
+}
+
+/* 识别历史 */
+.history-section {
+  margin-top: 32rpx;
+  padding: 0 32rpx;
+}
+
+.history-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16rpx;
+}
+
+.history-title {
+  font-size: 28rpx;
+  font-weight: 600;
+  color: #333;
+}
+
+.history-clear {
+  font-size: 24rpx;
+  color: #fa5151;
+}
+
+.history-list {
+  background: #fff;
+  border-radius: 12rpx;
+  overflow: hidden;
+}
+
+.history-item {
+  display: flex;
+  align-items: center;
+  padding: 20rpx 24rpx;
+  border-bottom: 1rpx solid #f0f0f0;
+}
+
+.history-item:last-child {
+  border-bottom: none;
+}
+
+.history-thumb {
+  width: 96rpx;
+  height: 96rpx;
+  border-radius: 8rpx;
+  background: #f0f0f0;
+  flex-shrink: 0;
+  margin-right: 20rpx;
+}
+
+.history-info {
+  flex: 1;
+  overflow: hidden;
+}
+
+.history-name {
+  font-size: 28rpx;
+  color: #333;
+  display: block;
+}
+
+.history-meta {
+  font-size: 22rpx;
+  color: #bbb;
+  margin-top: 6rpx;
+  display: block;
+}

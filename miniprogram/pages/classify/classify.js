@@ -20,7 +20,42 @@ Page({
         size:0,
         url:''
       },     // 当前待识别的图片信息
-      error: null // 用来向页面传递错误信息
+      error: null, // 用来向页面传递错误信息
+      history: []   // 识别历史
+    },
+
+    onLoad() {
+      this.loadHistory()
+    },
+
+    loadHistory() {
+      const history = wx.getStorageSync('classifyHistory') || []
+      this.setData({ history })
+    },
+
+    saveHistory(item) {
+      let history = wx.getStorageSync('classifyHistory') || []
+      history.unshift(item)
+      if (history.length > 20) history = history.slice(0, 20)
+      wx.setStorageSync('classifyHistory', history)
+      this.setData({ history })
+    },
+
+    clearHistory() {
+      wx.showModal({
+        title: '清空历史',
+        content: '确定要清空识别历史吗？',
+        success: (res) => {
+          if (res.confirm) {
+            wx.removeStorageSync('classifyHistory')
+            this.setData({ history: [] })
+          }
+        }
+      })
+    },
+
+    navigateToTrain() {
+      wx.switchTab({ url: '/pages/train/train' })
     },
 
     /**
@@ -122,15 +157,21 @@ Page({
                   ...item,
                   confidenceText: (Number(item.confidence) * 100).toFixed(1) + '%'
                 }))
-                this.setData({
-                  result: {
-                    imagePath: imagePath,
-                    error: null,
-                    ...raw,
-                    top1_confidence: conf,
-                    confidenceText: isNaN(conf) ? '' : (conf * 100).toFixed(1) + '%',
-                    top5: top5
-                  }
+                const finalResult = {
+                  imagePath: imagePath,
+                  error: null,
+                  ...raw,
+                  top1_confidence: conf,
+                  confidenceText: isNaN(conf) ? '' : (conf * 100).toFixed(1) + '%',
+                  top5: top5
+                }
+                this.setData({ result: finalResult })
+                // 保存识别历史
+                this.saveHistory({
+                  name: raw.top1,
+                  confidence: finalResult.confidenceText,
+                  time: new Date().toLocaleString(),
+                  imagePath: imagePath
                 })
               }
             },

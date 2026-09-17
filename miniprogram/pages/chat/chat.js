@@ -22,6 +22,20 @@ Page({
     },
 
     /**
+     * 长按复制消息
+     */
+    onCopyMessage(e) {
+      const content = e.currentTarget.dataset.content
+      if (!content) return
+      wx.setClipboardData({
+        data: content,
+        success: () => {
+          wx.showToast({ title: '已复制', icon: 'success' })
+        }
+      })
+    },
+
+    /**
      * 点击常见问题
      */
     onHotQuestion(e) {

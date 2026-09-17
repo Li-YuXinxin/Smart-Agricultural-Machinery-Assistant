@@ -20,7 +20,7 @@
       </view>
     </view>
 
-    <view wx:for="{{messages}}" wx:key="index" class="message-row {{item.role === 'user' ? 'message-user' : 'message-ai'}}">
+    <view wx:for="{{messages}}" wx:key="index" class="message-row {{item.role === 'user' ? 'message-user' : 'message-ai'}}" bindlongpress="onCopyMessage" data-content="{{item.content}}">
       <!-- 头像 -->
       <view class="avatar {{item.role === 'user' ? 'avatar-user' : 'avatar-ai'}}">
         <text>{{item.role === 'user' ? '我' : 'AI'}}</text>

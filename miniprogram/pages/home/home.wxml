@@ -2,6 +2,7 @@
 <view class="container">
   <view>
     <text>智能植物养护助手</text>
+    <text class="stats-hint" wx:if="{{modelCount > 0}}">已支持识别 {{modelCount}} 种{{isFinetuned ? '植物' : '物品'}}</text>
   </view>
   <view>
     <view wx:for="{{features}}" wx:key="title" bindtap="navigateTo" data-url="{{item.url}}" class="feature-card">

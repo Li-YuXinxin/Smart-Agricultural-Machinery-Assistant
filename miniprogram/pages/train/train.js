@@ -100,6 +100,10 @@ Page({
             // console.log('当前状态:', get_data.status)
             this.setData ({status:get_data})      // 更新页面数据中的训练状态
             console.log('ws接收到数据：', get_data)
+            // 训练完成时震动提醒
+            if (get_data.status === 'done' || get_data.status === 'failed') {
+              wx.vibrateShort({ type: 'heavy' })
+            }
           }catch(e){
             // 收到非JSON内容时只记录,不中断后续消息
             console.error('解析失败,原始数据:', res && res.data, e)

@@ -16,6 +16,34 @@ Page({
       this.loadDocuments()
     },
 
+    onPullDownRefresh() {
+      this.loadDocuments()
+      wx.stopPullDownRefresh()
+    },
+
+    /**
+     * 格式化时间戳
+     */
+    formatTime(timestamp) {
+      const d = new Date(timestamp * 1000)
+      const pad = n => n.toString().padStart(2, '0')
+      return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`
+    },
+
+    /**
+     * 获取文件类型标签
+     */
+    getTypeTag(name) {
+      const ext = (name || '').split('.').pop().toLowerCase()
+      const map = {
+        pdf: { text: 'PDF', color: '#e74c3c' },
+        doc: { text: 'DOC', color: '#2980b9' },
+        docx: { text: 'DOCX', color: '#2980b9' },
+        txt: { text: 'TXT', color: '#27ae60' }
+      }
+      return map[ext] || { text: ext.toUpperCase(), color: '#999' }
+    },
+
     /**
      * 加载已上传文档列表
      */
@@ -28,7 +56,9 @@ Page({
           if (res.statusCode === 200) {
             const docs = (res.data.documents || []).map(doc => ({
               ...doc,
-              sizeText: this.formatSize(doc.size)
+              sizeText: this.formatSize(doc.size),
+              timeText: this.formatTime(doc.time),
+              typeTag: this.getTypeTag(doc.displayName)
             }))
             console.log('解析后文档数:', docs.length)
             this.setData({ documents: docs })

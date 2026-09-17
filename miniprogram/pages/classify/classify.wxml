@@ -8,17 +8,36 @@
       <!--结果列表-->
       <view>
         <view>
-          <text>
-            品种：{{result.top1}}
-          </text>
+          <text>品种：{{result.top1}}</text>
           <text wx:if="{{result.confidenceText}}">  置信度：{{result.confidenceText}}</text>
-          <text wx:if="{{result.error}}">{{result.error}}</text>
+        </view>
+        <!-- 未知类型引导 -->
+        <view wx:if="{{result.top1 === '未知类型'}}" class="unknown-hint">
+          <text>无法识别该品种，试试</text>
+          <text class="unknown-link" bindtap="navigateToTrain">训练新品种</text>
         </view>
         <!-- Top-5 候选 -->
         <view wx:if="{{result.top5 && result.top5.length > 1}}">
           <text>其他可能：</text>
           <view wx:for="{{result.top5}}" wx:key="class" wx:if="{{index > 0}}">
             <text>{{item.class}}（{{item.confidenceText}}）</text>
+          </view>
+        </view>
+      </view>
+    </view>
+
+    <!-- 识别历史 -->
+    <view class="history-section" wx:if="{{history.length > 0}}">
+      <view class="history-header">
+        <text class="history-title">识别历史</text>
+        <text class="history-clear" bindtap="clearHistory">清空</text>
+      </view>
+      <view class="history-list">
+        <view class="history-item" wx:for="{{history}}" wx:key="time">
+          <image wx:if="{{item.imagePath}}" class="history-thumb" src="{{item.imagePath}}" mode="aspectFill"></image>
+          <view class="history-info">
+            <text class="history-name">{{item.name}}</text>
+            <text class="history-meta">{{item.confidence}} · {{item.time}}</text>
           </view>
         </view>
       </view>

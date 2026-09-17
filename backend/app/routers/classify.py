@@ -6,6 +6,14 @@ from services.classify_service import classify_service
 
 router = APIRouter(prefix="/api/classify")
 
+@router.get("/stats")
+async def classify_stats():
+    count = len(classify_service.class_names) if classify_service.class_names else 0
+    is_finetuned = classify_service.model_ready and any(
+        not name.startswith("class_") for name in (classify_service.class_names or [])
+    )
+    return {"count": count, "is_finetuned": is_finetuned}
+
 def decode_base64_image(base64_str: str) -> bytes:
     if base64_str.startswith("data:image"):
         # 前端传回的base64字符串,有且只有1个,所以只需要搜索并分割1次
