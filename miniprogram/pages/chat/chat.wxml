@@ -40,7 +40,7 @@
           <text wx:if="{{item.role === 'user'}}" class="bubble-text" user-select>{{item.content}}</text>
           <!-- AI消息：Markdown渲染 -->
           <view wx:if="{{item.role === 'ai'}}" class="bubble-text">
-            <rich-text nodes="{{item.htmlContent}}" user-select style="display:inline"></rich-text><text wx:if="{{isStreaming && index === messages.length - 1}}" class="typing-cursor {{cursorVisible ? 'cursor-show' : 'cursor-hide'}}">|</text>
+            <rich-text nodes="{{item.htmlContent}}" user-select class="{{isThinking && index === messages.length - 1 ? 'thinking-blink' : ''}}" style="display:inline"></rich-text>
           </view>
           <text wx:if="{{item.source}}" class="source-text source-link" bindtap="previewSource" data-source="{{item.source}}">📎 {{item.source}}</text>
         </view>

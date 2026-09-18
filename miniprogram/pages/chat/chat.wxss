@@ -139,20 +139,15 @@
   font-size: 28rpx;
 }
 
-/* 打字光标 */
-.typing-cursor {
-  font-weight: 700;
-  color: #2D7A4F;
-  margin-left: 2rpx;
-  animation: blink 1s step-end infinite;
+/* 思考中闪烁 */
+.thinking-blink {
+  animation: thinkingBlink 1.2s ease-in-out infinite;
 }
 
-@keyframes blink {
-  50% { opacity: 0; }
+@keyframes thinkingBlink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.3; }
 }
-
-.cursor-show { opacity: 1; }
-.cursor-hide { opacity: 0; }
 
 /* 消息行 */
 .message-row {
@@ -216,17 +211,19 @@
 .bubble {
   padding: 22rpx 28rpx;
   border-radius: 20rpx;
-  word-break: break-all;
   line-height: 1.65;
+  overflow: hidden;
 }
 
 .bubble-text {
   font-size: 28rpx;
-  display: inline;
+  display: block;
 }
 
 .bubble-text rich-text {
   display: inline;
+  overflow-wrap: break-word;
+  word-break: break-word;
 }
 
 /* 用户气泡 */

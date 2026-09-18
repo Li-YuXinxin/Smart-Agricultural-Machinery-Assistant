@@ -17,8 +17,8 @@ Page({
         '室内养花适合什么光照？',
         '植物长虫了怎么处理？'
       ],
-      // 打字动画
-      cursorVisible: true,
+      // 思考中闪烁
+      isThinking: false,
     },
 
     /**
@@ -61,20 +61,8 @@ Page({
     },
 
     /**
-     * 启动光标闪烁
+     * 思考中闪烁（由CSS动画处理，只需切换状态）
      */
-    _cursorTimer: null,
-    startCursorBlink() {
-      this._cursorTimer = setInterval(() => {
-        this.setData({ cursorVisible: !this.data.cursorVisible })
-      }, 500)
-    },
-    stopCursorBlink() {
-      if (this._cursorTimer) {
-        clearInterval(this._cursorTimer)
-        this._cursorTimer = null
-      }
-    },
 
     /**
      * Markdown → HTML（轻量解析，支持常用格式）
@@ -160,7 +148,7 @@ Page({
       // 同时确保即使超过token限制，也能显示前半部分的答案
       this.setData({messages:[...this.data.messages,aiMsg]})
 
-      this.startCursorBlink()
+      this.setData({ isThinking: true })
       let timeoutId = this.checkChunkTimeout(null)
       // let timeoutId = setTimeout(() => {
       //   if (this.data.isStreaming) {
@@ -199,7 +187,7 @@ Page({
         fail: (err) => {
           // 清空计时器
           clearTimeout(timeoutId)
-          this.stopCursorBlink()
+          this.setData({ isThinking: false })
           // 交互状态清空
           this.setData({ isStreaming: false })
           // 删除空的ai占位消息
@@ -313,7 +301,7 @@ Page({
         // 最终渲染Markdown为HTML
         last.htmlContent = this.mdToHtml(last.content)
       }
-      this.stopCursorBlink()
+      this.setData({ isThinking: false })
       // 交互状态清空
       this.setData({isStreaming:false, messages: msgs})
       // wx.showToast({
@@ -359,7 +347,7 @@ Page({
       if (timeoutId)
         clearTimeout(timeoutId)
 
-      this.stopCursorBlink()
+      this.setData({ isThinking: false })
       this.setData({isStreaming:false})
       wx.showToast({
         title:'交互失败',
@@ -420,7 +408,7 @@ Page({
       return setTimeout(() => {
         if (this.data.isStreaming) {
           // 思考超时,停止交互
-          this.stopCursorBlink()
+          this.setData({ isThinking: false })
           this.setData({ isStreaming: false })
           // 显示提示(持续3秒)
           wx.showToast({ title: '思考超时', icon: 'none', duration: 3000 })

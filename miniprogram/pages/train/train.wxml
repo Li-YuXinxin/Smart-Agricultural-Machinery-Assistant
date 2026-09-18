@@ -4,7 +4,7 @@
   <!-- 顶部渐变标题栏 -->
   <view class="train-header">
     <view class="header-deco"></view>
-    <text class="header-title">🧠 训练新品种</text>
+    <text class="header-title">🌼 训练新品种</text>
     <text class="header-sub">上传图片，扩展植物识别能力</text>
   </view>
 
